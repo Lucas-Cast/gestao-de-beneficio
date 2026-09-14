@@ -1,8 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
+
+process.env.DATABASE_URL ??=
+  'postgresql://postgres:postgres@localhost:5432/gestor_beneficio?schema=public';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;

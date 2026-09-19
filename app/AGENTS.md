@@ -241,6 +241,32 @@ export const API_ROUTES = {
 Do not duplicate or inline these paths in screens, components, hooks, or
 services.
 
+### API client and request hooks
+
+- Use `axios` through the singleton in `src/services/api/client.ts`. Do not
+  create an Axios instance inside a feature or inside an individual hook.
+- Keep session-token persistence in `src/services/api/session.ts`. The API
+  client reads the token from this service and adds the `Authorization: Bearer`
+  header automatically. Feature code is responsible for saving the token after
+  login or registration and clearing it on logout.
+- Keep API error normalization in `src/services/api/errors.ts`. Features and
+  screens should consume the normalized error instead of depending directly on
+  Axios error internals.
+- Use the generic hooks in `src/hooks/api/`:
+  - `use-api-get.ts` performs GET requests on mount and exposes `refetch`.
+  - `use-api-post.ts` exposes `execute(payload)` for mutations.
+  - `use-api-delete.ts` exposes `execute()` for deletions.
+- These hooks expose `data`, `loading`, `error`, and `reset`. They do not
+  implement cache, invalidation, or feature-specific business rules.
+- Compose generic request hooks inside feature hooks. For example,
+  `src/features/auth/hooks/use-login.ts` should use `useApiPost` with
+  `API_ROUTES.auth.login`, handle the login response, and persist its JWT.
+- Do not put navigation inside the Axios client or generic hooks. Authentication
+  state and route redirects belong to the auth feature/provider.
+- Keep the API base URL in `EXPO_PUBLIC_API_URL` and endpoint paths in
+  `src/constants/routes.ts`. Public Expo environment variables may contain
+  addresses and configuration, never secrets.
+
 ### Dependency direction
 
 The preferred dependency direction is:

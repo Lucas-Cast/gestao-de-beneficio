@@ -2,11 +2,8 @@ name: CD - Backend
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'api/**'
-      - '.github/workflows/deploy-backend.yml'
+    tags:
+      - 'v*.*.*'
   workflow_dispatch:
 
 permissions:

@@ -1,6 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsString, Matches, MinLength } from 'class-validator';
+
+import {
+  PASSWORD_LOWERCASE_MESSAGE,
+  PASSWORD_LOWERCASE_REGEX,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_MIN_LENGTH_MESSAGE,
+  PASSWORD_SPECIAL_CHARACTER_MESSAGE,
+  PASSWORD_SPECIAL_CHARACTER_REGEX,
+  PASSWORD_UPPERCASE_MESSAGE,
+  PASSWORD_UPPERCASE_REGEX,
+} from '../validation/password.validation';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'Ana Souza', minLength: 2 })
@@ -19,11 +30,16 @@ export class CreateUserDto {
   email!: string;
 
   @ApiProperty({
-    example: 'senha-segura-123',
-    minLength: 8,
+    example: 'SenhaSegura@123',
+    minLength: PASSWORD_MIN_LENGTH,
     writeOnly: true,
   })
   @IsString()
-  @MinLength(8)
+  @MinLength(PASSWORD_MIN_LENGTH, { message: PASSWORD_MIN_LENGTH_MESSAGE })
+  @Matches(PASSWORD_UPPERCASE_REGEX, { message: PASSWORD_UPPERCASE_MESSAGE })
+  @Matches(PASSWORD_LOWERCASE_REGEX, { message: PASSWORD_LOWERCASE_MESSAGE })
+  @Matches(PASSWORD_SPECIAL_CHARACTER_REGEX, {
+    message: PASSWORD_SPECIAL_CHARACTER_MESSAGE,
+  })
   password!: string;
 }

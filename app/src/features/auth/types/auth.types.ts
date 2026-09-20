@@ -1,3 +1,8 @@
+export type AuthUser = {
+  name: string;
+  email: string;
+};
+
 export type AuthResponse = {
   token: string;
   name: string;

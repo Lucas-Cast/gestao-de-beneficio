@@ -206,6 +206,7 @@ Move code to a shared folder only when it is intentionally reusable by more
 than one feature.
 
 - `src/components/`: reusable visual components and UI primitives.
+- `src/context/`: global React contexts shared across features, such as the authenticated user context.
 - `src/constants/`: app-wide constants and configuration values.
 - `src/hooks/`: hooks used by multiple features.
 - `src/services/`: shared clients and integrations.

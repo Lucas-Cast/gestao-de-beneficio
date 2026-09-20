@@ -28,10 +28,23 @@ async function bootstrap() {
     .setDescription('Documentação da API do Gestor de Benefícios.')
     .setVersion('1.0')
     .addTag('users', 'Operações de usuários')
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      description: 'Informe o token JWT sem o prefixo Bearer.',
+    })
     .build();
 
-  SwaggerModule.setup('docs', app, () =>
-    SwaggerModule.createDocument(app, swaggerConfig),
+  SwaggerModule.setup(
+    'docs',
+    app,
+    () => SwaggerModule.createDocument(app, swaggerConfig),
+    {
+      swaggerOptions: {
+        persistAuthorization: true,
+      },
+    },
   );
 
   await app.listen(process.env.PORT ?? 3000);

@@ -9,6 +9,13 @@ export type AuthResponse = {
   email: string;
 };
 
+export type RegisterResponse = {
+  id: string;
+  name: string;
+  email: string;
+  isActive: boolean;
+};
+
 export type LoginPayload = {
   email: string;
   password: string;

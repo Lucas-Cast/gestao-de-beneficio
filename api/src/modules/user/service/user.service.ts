@@ -22,7 +22,7 @@ export class UserService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<LoginResponseDto> {
+  async create(createUserDto: CreateUserDto): Promise<UserDomain> {
     const existingUser = await this.userRepository.findByEmail(
       createUserDto.email,
     );
@@ -35,9 +35,10 @@ export class UserService {
       name: createUserDto.name,
       email: createUserDto.email,
       password: await this.hashService.hash(createUserDto.password),
+      isActive: false,
     });
 
-    return this.createAuthResponse(user);
+    return UserDomain.fromPrisma(user);
   }
 
   async login(loginUserDto: LoginUserDto): Promise<LoginResponseDto> {
@@ -46,7 +47,7 @@ export class UserService {
       ? await this.hashService.compare(loginUserDto.password, user.password)
       : false;
 
-    if (!user || user.isDeleted || !valid) {
+    if (!user || user.isDeleted || !user.isActive || !valid) {
       throw new UnauthorizedException('E-mail ou senha invalidos.');
     }
 

@@ -40,9 +40,9 @@ export class UserController {
   @IsPublic()
   @Post()
   @ApiOperation({ summary: 'Cria um usuário' })
-  @ApiCreatedResponse({ type: LoginResponseDto })
+  @ApiCreatedResponse({ type: UserDomain })
   @ApiConflictResponse({ description: 'E-mail já está em uso.' })
-  async create(@Body() createUserDto: CreateUserDto): Promise<LoginResponseDto> {
+  async create(@Body() createUserDto: CreateUserDto): Promise<UserDomain> {
     return this.userService.create(createUserDto);
   }
 

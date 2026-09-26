@@ -1,4 +1,8 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import type {
   Prisma,
@@ -19,6 +23,7 @@ const prismaUser: PrismaUser = {
   email: 'usuario@exemplo.com',
   password: 'salt:hash',
   isDeleted: false,
+  isActive: true,
   createdAt: new Date('2026-09-13T12:00:00.000Z'),
   updatedAt: new Date('2026-09-13T12:00:00.000Z'),
 };
@@ -68,7 +73,10 @@ describe('UserService', () => {
   it('hashes the password and never exposes it when creating a user', async () => {
     hashService.hash.mockResolvedValue('salt:hashed-password');
     userRepository.findByEmail.mockResolvedValue(null);
-    userRepository.create.mockResolvedValue(prismaUser);
+    userRepository.create.mockResolvedValue({
+      ...prismaUser,
+      isActive: false,
+    });
     jwtService.sign.mockReturnValue('jwt-token');
 
     const user = await service.create({
@@ -83,10 +91,15 @@ describe('UserService', () => {
     expect(createdUser.name).toBe(prismaUser.name);
     expect(createdUser.email).toBe(prismaUser.email);
     expect(createdUser.password).toBe('salt:hashed-password');
+    expect(createdUser.isActive).toBe(false);
     expect(user).toEqual({
-      token: 'jwt-token',
+      id: prismaUser.id,
       name: prismaUser.name,
       email: prismaUser.email,
+      isDeleted: false,
+      isActive: false,
+      createdAt: prismaUser.createdAt,
+      updatedAt: prismaUser.updatedAt,
     });
   });
 
@@ -117,6 +130,21 @@ describe('UserService', () => {
       name: prismaUser.name,
       email: prismaUser.email,
     });
+  });
+
+  it('rejects inactive users even with a valid password', async () => {
+    userRepository.findByEmail.mockResolvedValue({
+      ...prismaUser,
+      isActive: false,
+    });
+    hashService.compare.mockResolvedValue(true);
+
+    await expect(
+      service.login({
+        email: prismaUser.email,
+        password: 'senha-segura-123',
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
   it('marks an existing user as deleted instead of deleting it physically', async () => {

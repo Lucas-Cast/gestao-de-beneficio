@@ -31,7 +31,7 @@ export default function RegisterScreen() {
       email: values.email.trim().toLowerCase(),
       password: values.password,
     });
-    router.replace('/');
+    router.replace('/login');
   };
 
   return (

@@ -268,6 +268,17 @@ services.
   `src/constants/routes.ts`. Public Expo environment variables may contain
   addresses and configuration, never secrets.
 
+### User-facing language
+
+- All text visible to users must be written in Brazilian Portuguese, including
+  screen copy, buttons, labels, placeholders, validation messages, API error
+  feedback, notifications, empty states, accessibility labels, and confirmation
+  dialogs.
+- Keep code identifiers, API field names, route names, and internal logs in
+  English when appropriate; this rule applies to user-facing text.
+- When displaying an API error, use its normalized Portuguese message. Do not
+  expose raw Axios, JavaScript, or infrastructure error messages to users.
+
 ### Dependency direction
 
 The preferred dependency direction is:

@@ -25,8 +25,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: JwtPayload): Promise<UserDomain> {
     const user = await this.userRepository.findById(payload.sub);
 
-    if (!user) {
-      throw new UnauthorizedException('Usuario nao encontrado.');
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('Usuário não encontrado ou inativo.');
     }
 
     return UserDomain.fromPrisma(user);

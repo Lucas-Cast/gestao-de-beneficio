@@ -1,0 +1,2 @@
+export const MIN_POSITIVE_INTEGER = 1;
+export const MAX_INTEGER_VALUE = 2_147_483_647;

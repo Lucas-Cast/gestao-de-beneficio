@@ -25,6 +25,13 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## Organização das regras de negócio
+
+- O domínio concentra regras puras da entidade, cálculos e invariantes que não dependem de banco de dados, rede ou outros serviços. Entidades de domínio podem ter comportamento; não devem ser apenas cópias dos modelos do Prisma.
+- O service coordena os casos de uso: consulta os repositories, chama as regras do domínio e controla transações que envolvem múltiplas operações.
+- O repository é a única camada que acessa o Prisma e o banco de dados. Quando uma operação estiver dentro de uma transação iniciada pelo service, o service passa o cliente transacional aos métodos do repository para que todas as gravações participem da mesma transação.
+- Regras que dependem do estado atual do banco, especialmente concorrência e saldo de estoque, também precisam ser garantidas pela operação atômica no banco. Uma validação anterior no domínio não substitui essa proteção.
+
 ## Project setup
 
 ```bash
@@ -46,6 +53,8 @@ $ npm run start:prod
 
 ## Run tests
 
+Integration tests use `@testcontainers/postgresql`: each suite starts its own disposable PostgreSQL 18 container, applies all migrations, boots Nest, and closes the application and container on teardown. Docker must be available to the Node process. Tests set both `DATABASE_URL` and `DIRECT_URL` to the container URI and never fall back to `.env` database connections. The PostgreSQL image is pinned by digest in `test/helpers/integration-app.ts`; keep its major version aligned with production when upgrading. Use Node.js 22.22 or later.
+
 ```bash
 # unit tests
 $ npm run test
@@ -56,6 +65,27 @@ $ npm run test:e2e
 # test coverage
 $ npm run test:cov
 ```
+
+## Inventory API
+
+All inventory endpoints require a JWT for an active user. Manual movements are available to authenticated active users, including `COMMON`. The actor is always obtained from the JWT-authenticated user; request bodies cannot set actor IDs or attach manual movements to a delivery.
+
+| Endpoint | Behavior |
+| --- | --- |
+| `POST /supplies` | Create a supply with optional opening `currentQuantity` (database default: zero). |
+| `GET /supplies` | Paginated catalog; filters: `search`, `unit`. |
+| `GET /supplies/:id` | Read an active supply. |
+| `PATCH /supplies/:id` | Update `name`, `description`, or `unit`; quantity updates are rejected. |
+| `DELETE /supplies/:id` | Soft delete a supply and preserve its history. |
+| `POST /stock-movements` | Record a manual `IN` or `OUT` and atomically update its supply balance. |
+| `GET /stock-movements` | Paginated audit history; filters: `supplyId`, `type`, `performedById`, `basketDeliveryId`, `from`, `to`. |
+| `POST /basket-deliveries` | Deliver a basket definition, decrement all required supplies, and link the resulting `OUT` movements in one transaction. |
+
+List endpoints accept `page` (default 1) and `pageSize` (default 20, maximum 100) and return `{ data, total, page, pageSize }`. Dates in movement filters are inclusive; results are ordered by `createdAt` and `id`, descending. Stock and basket item quantities are whole JSON integers, stored as PostgreSQL `INTEGER` and returned as JSON numbers. The chosen `unit` determines what one unit represents: for example, `2` with `KILOGRAM` or `1500` with `GRAM`.
+
+Basket delivery accepts `basketId`, `beneficiaryId`, optional integer `quantity` (default 1), and optional `observation`. Basket and beneficiary CRUD are outside this implementation; these referenced records must already exist. Deliveries and movements have no update/delete endpoints. Supply opening balances do not create movements, so summing movement history alone does not reconstruct a nonzero opening balance.
+
+The delivery-to-movement relation is introduced by `20260926140000_link_delivery_stock_movements`; `20260926150000_use_integer_stock_quantities` converts inventory amounts to whole units. The latter migration stops if existing stock, basket, or movement values have fractions, so they can be reviewed rather than rounded silently. Apply pending migrations with `npm run prisma:deploy` before running the updated API. Existing movements retain a null delivery reference.
 
 ## Deployment
 

@@ -17,7 +17,13 @@ import { UserRepository } from './user.repository';
     }),
   ],
   controllers: [UserController],
-  providers: [UserRepository, HashService, JwtStrategy, JwtAuthGuard, UserService],
+  providers: [
+    UserRepository,
+    HashService,
+    JwtStrategy,
+    JwtAuthGuard,
+    UserService,
+  ],
+  exports: [JwtAuthGuard, UserService],
 })
-
 export class UserModule {}

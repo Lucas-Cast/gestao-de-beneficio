@@ -40,6 +40,9 @@ jobs:
       - name: Test
         run: npm test -- --runInBand
 
+      - name: PostgreSQL integration tests (Testcontainers)
+        run: npm run test:e2e -- --runInBand
+
   migrate:
     name: Apply database migrations
     needs: validate

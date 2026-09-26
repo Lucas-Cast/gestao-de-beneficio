@@ -59,6 +59,10 @@ export class UserService {
     return UserDomain.fromPrismaMany(users);
   }
 
+  async isActive(tx: Prisma.TransactionClient, id: string): Promise<boolean> {
+    return Boolean(await this.userRepository.findActiveById(tx, id));
+  }
+
   async findOne(id: string): Promise<UserDomain> {
     const user = await this.findActiveUser(id);
     return UserDomain.fromPrisma(user);

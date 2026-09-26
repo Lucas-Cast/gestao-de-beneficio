@@ -23,6 +23,15 @@ export class UserRepository {
     });
   }
 
+  findActiveById(
+    tx: Prisma.TransactionClient,
+    id: string,
+  ): Promise<PrismaUser | null> {
+    return tx.user.findFirst({
+      where: { id, deletedAt: null, isActive: true },
+    });
+  }
+
   async findByEmail(email: string): Promise<PrismaUser | null> {
     return this.databaseService.user.findUnique({
       where: { email },

@@ -82,7 +82,7 @@ model Supply {
   name            String          @unique
   description     String?
   unit            StockUnit
-  currentQuantity Decimal         @default(0) @db.Decimal(12, 3)
+  currentQuantity Int             @default(0)
   movements       StockMovement[]
   basketItems     BasketSupply[]
   createdAt       DateTime        @default(now())
@@ -109,7 +109,7 @@ model BasketSupply {
   basket    Basket    @relation(fields: [basketId], references: [id], onDelete: Restrict)
   supplyId  String
   supply    Supply    @relation(fields: [supplyId], references: [id], onDelete: Restrict)
-  quantity  Decimal   @db.Decimal(12, 3)
+  quantity  Int
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -119,18 +119,19 @@ model BasketSupply {
 }
 
 model BasketDelivery {
-  id            String      @id @default(uuid())
-  beneficiaryId String
-  beneficiary   Beneficiary @relation(fields: [beneficiaryId], references: [id], onDelete: Restrict)
-  basketId      String
-  basket        Basket      @relation(fields: [basketId], references: [id], onDelete: Restrict)
-  deliveredById String
-  deliveredBy   User        @relation("BasketDeliveryActor", fields: [deliveredById], references: [id], onDelete: Restrict)
-  quantity      Int         @default(1)
-  observation   String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  deletedAt     DateTime?
+  id             String          @id @default(uuid())
+  beneficiaryId  String
+  beneficiary    Beneficiary     @relation(fields: [beneficiaryId], references: [id], onDelete: Restrict)
+  basketId       String
+  basket         Basket          @relation(fields: [basketId], references: [id], onDelete: Restrict)
+  deliveredById  String
+  deliveredBy    User            @relation("BasketDeliveryActor", fields: [deliveredById], references: [id], onDelete: Restrict)
+  quantity       Int             @default(1)
+  observation    String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+  stockMovements StockMovement[]
 
   @@index([beneficiaryId, createdAt])
   @@index([basketId, createdAt])
@@ -139,19 +140,22 @@ model BasketDelivery {
 }
 
 model StockMovement {
-  id            String            @id @default(uuid())
-  supplyId      String
-  supply        Supply            @relation(fields: [supplyId], references: [id], onDelete: Restrict)
-  performedById String
-  performedBy   User              @relation("StockMovementActor", fields: [performedById], references: [id], onDelete: Restrict)
-  type          StockMovementType
+  id               String            @id @default(uuid())
+  supplyId         String
+  supply           Supply            @relation(fields: [supplyId], references: [id], onDelete: Restrict)
+  performedById    String
+  performedBy      User              @relation("StockMovementActor", fields: [performedById], references: [id], onDelete: Restrict)
+  basketDeliveryId String?
+  basketDelivery   BasketDelivery?   @relation(fields: [basketDeliveryId], references: [id], onDelete: Restrict)
+  type             StockMovementType
   /// Must be positive; type determines whether it adds to or subtracts from stock.
-  quantity      Decimal           @db.Decimal(12, 3)
-  reason        String?
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  deletedAt     DateTime?
+  quantity         Int
+  reason           String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
 
   @@index([supplyId, createdAt])
   @@index([performedById, createdAt])
+  @@index([basketDeliveryId])
 }

@@ -12,14 +12,14 @@ export class UserRepository {
 
   async findAll(): Promise<PrismaUser[]> {
     return this.databaseService.user.findMany({
-      where: { isDeleted: false },
+      where: { deletedAt: null },
       orderBy: { createdAt: 'desc' },
     });
   }
 
   async findById(id: string): Promise<PrismaUser | null> {
     return this.databaseService.user.findFirst({
-      where: { id, isDeleted: false },
+      where: { id, deletedAt: null },
     });
   }
 
@@ -39,7 +39,7 @@ export class UserRepository {
   async softDelete(id: string): Promise<PrismaUser> {
     return this.databaseService.user.update({
       where: { id },
-      data: { isDeleted: true },
+      data: { deletedAt: new Date() },
     });
   }
 }

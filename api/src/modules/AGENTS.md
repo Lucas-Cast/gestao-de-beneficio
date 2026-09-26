@@ -18,8 +18,8 @@ Quando a regra de negócio precisar ser dividida entre mais de um serviço, use 
 
 ## Dados e exclusão lógica
 
-- Para entidades com `isDeleted`, o repository deve excluir registros apagados das consultas normais.
-- A remoção deve atualizar `isDeleted` para `true`, sem apagar a linha fisicamente.
+- Para entidades com `deletedAt`, o repository deve excluir registros apagados das consultas normais usando `deletedAt: null`.
+- A remoção deve preencher `deletedAt` com a data atual, sem apagar a linha fisicamente.
 
 ## Qualidade
 

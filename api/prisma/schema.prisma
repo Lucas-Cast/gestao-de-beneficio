@@ -8,15 +8,150 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  isDeleted Boolean  @default(false)
-  isActive Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum BeneficiarySex {
+  M
+  F
+}
 
-  @@index([isDeleted])
+enum StockMovementType {
+  IN
+  OUT
+}
+
+enum StockUnit {
+  UNIT
+  KILOGRAM
+  GRAM
+  LITER
+  MILLILITER
+  PACKAGE
+}
+
+enum UserRole {
+  ADMIN
+  COMMON
+}
+
+model User {
+  id               String           @id @default(uuid())
+  name             String
+  email            String           @unique
+  password         String
+  deletedAt        DateTime?
+  isActive         Boolean          @default(false)
+  role             UserRole         @default(COMMON)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  stockMovements   StockMovement[]  @relation("StockMovementActor")
+  basketDeliveries BasketDelivery[] @relation("BasketDeliveryActor")
+
+  @@index([deletedAt])
+}
+
+model Beneficiary {
+  id               String           @id @default(uuid())
+  name             String
+  birthDate        DateTime         @db.Date
+  sex              BeneficiarySex
+  phone            String
+  cpf              String           @unique
+  addressId        String           @unique
+  address          Address          @relation(fields: [addressId], references: [id])
+  basketDeliveries BasketDelivery[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deletedAt        DateTime?
+}
+
+model Address {
+  id           String       @id @default(uuid())
+  street       String
+  number       String
+  complement   String?
+  neighborhood String
+  city         String
+  state        String
+  postalCode   String
+  beneficiary  Beneficiary?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Supply {
+  id              String          @id @default(uuid())
+  name            String          @unique
+  description     String?
+  unit            StockUnit
+  currentQuantity Decimal         @default(0) @db.Decimal(12, 3)
+  movements       StockMovement[]
+  basketItems     BasketSupply[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
+}
+
+model Basket {
+  id          String           @id @default(uuid())
+  name        String
+  description String?
+  supplies    BasketSupply[]
+  deliveries  BasketDelivery[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
+
+  @@index([deletedAt])
+}
+
+model BasketSupply {
+  id        String    @id @default(uuid())
+  basketId  String
+  basket    Basket    @relation(fields: [basketId], references: [id], onDelete: Restrict)
+  supplyId  String
+  supply    Supply    @relation(fields: [supplyId], references: [id], onDelete: Restrict)
+  quantity  Decimal   @db.Decimal(12, 3)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([basketId, supplyId])
+  @@index([deletedAt])
+}
+
+model BasketDelivery {
+  id            String      @id @default(uuid())
+  beneficiaryId String
+  beneficiary   Beneficiary @relation(fields: [beneficiaryId], references: [id], onDelete: Restrict)
+  basketId      String
+  basket        Basket      @relation(fields: [basketId], references: [id], onDelete: Restrict)
+  deliveredById String
+  deliveredBy   User        @relation("BasketDeliveryActor", fields: [deliveredById], references: [id], onDelete: Restrict)
+  quantity      Int         @default(1)
+  observation   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  deletedAt     DateTime?
+
+  @@index([beneficiaryId, createdAt])
+  @@index([basketId, createdAt])
+  @@index([deliveredById, createdAt])
+  @@index([deletedAt])
+}
+
+model StockMovement {
+  id            String            @id @default(uuid())
+  supplyId      String
+  supply        Supply            @relation(fields: [supplyId], references: [id], onDelete: Restrict)
+  performedById String
+  performedBy   User              @relation("StockMovementActor", fields: [performedById], references: [id], onDelete: Restrict)
+  type          StockMovementType
+  /// Must be positive; type determines whether it adds to or subtracts from stock.
+  quantity      Decimal           @db.Decimal(12, 3)
+  reason        String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  deletedAt     DateTime?
+
+  @@index([supplyId, createdAt])
+  @@index([performedById, createdAt])
 }

@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import type { UserRole } from '../../../generated/prisma/client';
 import { UserDomain } from '../domain/user.domain';
 import { UserRepository } from '../user.repository';
 
@@ -8,6 +9,7 @@ interface JwtPayload {
   sub: string;
   email: string;
   name: string;
+  role: UserRole;
 }
 
 @Injectable()
@@ -24,9 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.userRepository.findById(payload.sub);
 
     if (!user) {
-      throw new UnauthorizedException(
-        'Usuario nao encontrado.',
-      );
+      throw new UnauthorizedException('Usuario nao encontrado.');
     }
 
     return UserDomain.fromPrisma(user);

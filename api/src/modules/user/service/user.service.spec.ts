@@ -22,8 +22,9 @@ const prismaUser: PrismaUser = {
   name: 'Ana Souza',
   email: 'usuario@exemplo.com',
   password: 'salt:hash',
-  isDeleted: false,
+  deletedAt: null,
   isActive: true,
+  role: 'COMMON',
   createdAt: new Date('2026-09-13T12:00:00.000Z'),
   updatedAt: new Date('2026-09-13T12:00:00.000Z'),
 };
@@ -92,11 +93,12 @@ describe('UserService', () => {
     expect(createdUser.email).toBe(prismaUser.email);
     expect(createdUser.password).toBe('salt:hashed-password');
     expect(createdUser.isActive).toBe(false);
+    expect(createdUser).not.toHaveProperty('role');
     expect(user).toEqual({
       id: prismaUser.id,
       name: prismaUser.name,
       email: prismaUser.email,
-      isDeleted: false,
+      deletedAt: null,
       isActive: false,
       createdAt: prismaUser.createdAt,
       updatedAt: prismaUser.updatedAt,
@@ -115,22 +117,31 @@ describe('UserService', () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
-  it('returns a JWT and public user data when authenticating', async () => {
-    userRepository.findByEmail.mockResolvedValue(prismaUser);
-    hashService.compare.mockResolvedValue(true);
-    jwtService.sign.mockReturnValue('jwt-token');
+  it.each(['COMMON', 'ADMIN'] as const)(
+    'includes the %s role in the JWT when authenticating',
+    async (role) => {
+      userRepository.findByEmail.mockResolvedValue({ ...prismaUser, role });
+      hashService.compare.mockResolvedValue(true);
+      jwtService.sign.mockReturnValue('jwt-token');
 
-    await expect(
-      service.login({
+      await expect(
+        service.login({
+          email: prismaUser.email,
+          password: 'senha-segura-123',
+        }),
+      ).resolves.toEqual({
+        token: 'jwt-token',
+        name: prismaUser.name,
         email: prismaUser.email,
-        password: 'senha-segura-123',
-      }),
-    ).resolves.toEqual({
-      token: 'jwt-token',
-      name: prismaUser.name,
-      email: prismaUser.email,
-    });
-  });
+      });
+      expect(jwtService.sign).toHaveBeenCalledWith({
+        sub: prismaUser.id,
+        email: prismaUser.email,
+        name: prismaUser.name,
+        role,
+      });
+    },
+  );
 
   it('rejects inactive users even with a valid password', async () => {
     userRepository.findByEmail.mockResolvedValue({
@@ -151,7 +162,7 @@ describe('UserService', () => {
     userRepository.findById.mockResolvedValue(prismaUser);
     userRepository.softDelete.mockResolvedValue({
       ...prismaUser,
-      isDeleted: true,
+      deletedAt: new Date('2026-09-13T12:00:00.000Z'),
     });
 
     await service.remove(prismaUser.id);

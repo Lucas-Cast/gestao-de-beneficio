@@ -4,7 +4,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import type { Prisma } from '../../../generated/prisma/client';
+import type { Prisma, UserRole } from '../../../generated/prisma/client';
 import { UserDomain } from '../domain/user.domain';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -47,7 +47,7 @@ export class UserService {
       ? await this.hashService.compare(loginUserDto.password, user.password)
       : false;
 
-    if (!user || user.isDeleted || !user.isActive || !valid) {
+    if (!user || user.deletedAt !== null || !user.isActive || !valid) {
       throw new UnauthorizedException('E-mail ou senha invalidos.');
     }
 
@@ -104,12 +104,14 @@ export class UserService {
     id: string;
     name: string;
     email: string;
+    role: UserRole;
   }): LoginResponseDto {
     return {
       token: this.jwtService.sign({
         sub: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
       }),
       name: user.name,
       email: user.email,

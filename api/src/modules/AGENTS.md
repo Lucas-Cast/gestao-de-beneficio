@@ -14,6 +14,7 @@ Quando a regra de negócio precisar ser dividida entre mais de um serviço, use 
 - Os services em `service/` coordenam casos de uso, transações e conversões entre Prisma e domínio. Extraia lógicas reutilizáveis para serviços de apoio injetáveis.
 - Cada service pode injetar e chamar diretamente apenas o repository do próprio módulo. Para consultar ou alterar dados pertencentes a outro módulo, deve chamar o service desse módulo — nunca injetar o repository alheio. Quando a operação fizer parte de uma transação coordenada, passe o `Prisma.TransactionClient` ao método público apropriado do service proprietário; o repository continua encapsulado no módulo.
 - O repository é a única camada que consulta o Prisma, por meio de `DatabaseService`.
+- Para listagens paginadas, use `common/pagination/paginate` para calcular `skip/take`, executar `findMany` e `count` em paralelo e retornar `{ data, total }`. Os filtros, includes e a ordenação tipados continuam definidos no repository do recurso.
 - A entidade em `domain` deve ter métodos estáticos `fromPrisma` e `fromPrismaMany`. Nunca exponha dados sensíveis, como hashes de senha.
 - DTOs devem usar `class-validator` e decoradores do Swagger. O DTO de atualização deve estender `PartialType` do DTO de criação.
 

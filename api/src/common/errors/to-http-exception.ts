@@ -16,6 +16,10 @@ const domainResponses: Record<
     status: 400,
     message: 'A cesta deve conter pelo menos um mantimento.',
   },
+  DUPLICATE_BASKET_SUPPLY: {
+    status: 400,
+    message: 'Cada mantimento deve aparecer uma única vez na cesta.',
+  },
   SUPPLY_NOT_FOUND: {
     status: 404,
     message: 'Mantimento não encontrado ou excluído.',

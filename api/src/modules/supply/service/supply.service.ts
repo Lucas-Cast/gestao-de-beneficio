@@ -12,6 +12,13 @@ import { SupplyRepository } from '../supply.repository';
 export class SupplyService {
   constructor(private readonly repository: SupplyRepository) {}
 
+  async assertActiveInTransaction(tx: Prisma.TransactionClient, ids: string[]) {
+    const uniqueIds = [...new Set(ids)];
+    const supplies = await this.repository.findActiveByIds(tx, uniqueIds);
+    if (supplies.length !== uniqueIds.length)
+      throw new DomainError('SUPPLY_NOT_FOUND');
+  }
+
   async findByIdInTransaction(
     tx: Prisma.TransactionClient,
     id: string,

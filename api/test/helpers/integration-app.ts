@@ -97,6 +97,7 @@ export async function createIntegrationApp(): Promise<IntegrationApp> {
 export async function clearFixtures(database: DatabaseService): Promise<void> {
   // This service is constructed only after the helper overwrites both datasource URLs.
   await database.$transaction([
+    database.auditLog.deleteMany(),
     database.stockMovement.deleteMany(),
     database.basketDelivery.deleteMany(),
     database.basketSupply.deleteMany(),

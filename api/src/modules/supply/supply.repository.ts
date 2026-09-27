@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import { DatabaseService } from '../database/database.service';
 import { ListSuppliesDto } from './dto/list-supplies.dto';
+import { paginate } from '../../common/pagination/paginate';
 
 @Injectable()
 export class SupplyRepository {
@@ -11,7 +12,7 @@ export class SupplyRepository {
     return this.database.supply.create({ data });
   }
 
-  async findAll(query: ListSuppliesDto) {
+  findAll(query: ListSuppliesDto) {
     const where: Prisma.SupplyWhereInput = {
       deletedAt: null,
       unit: query.unit,
@@ -19,20 +20,28 @@ export class SupplyRepository {
         ? { contains: query.search, mode: 'insensitive' }
         : undefined,
     };
-    const [data, total] = await Promise.all([
-      this.database.supply.findMany({
-        where,
-        skip: (query.page - 1) * query.pageSize,
-        take: query.pageSize,
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      }),
-      this.database.supply.count({ where }),
-    ]);
-    return { data, total };
+    return paginate(
+      query,
+      ({ skip, take }) =>
+        this.database.supply.findMany({
+          where,
+          skip,
+          take,
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        }),
+      () => this.database.supply.count({ where }),
+    );
   }
 
   findById(id: string, tx: Prisma.TransactionClient = this.database) {
     return tx.supply.findFirst({ where: { id, deletedAt: null } });
+  }
+
+  findActiveByIds(tx: Prisma.TransactionClient, ids: string[]) {
+    return tx.supply.findMany({
+      where: { id: { in: ids }, deletedAt: null },
+      select: { id: true },
+    });
   }
 
   update(id: string, data: Prisma.SupplyUpdateInput) {

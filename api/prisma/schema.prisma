@@ -32,6 +32,11 @@ enum UserRole {
   COMMON
 }
 
+enum AuditEntityType {
+  BENEFICIARY
+  BASKET
+}
+
 model User {
   id               String           @id @default(uuid())
   name             String
@@ -44,6 +49,7 @@ model User {
   updatedAt        DateTime         @updatedAt
   stockMovements   StockMovement[]  @relation("StockMovementActor")
   basketDeliveries BasketDelivery[] @relation("BasketDeliveryActor")
+  auditLogs        AuditLog[]
 
   @@index([deletedAt])
 }
@@ -61,6 +67,21 @@ model Beneficiary {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   deletedAt        DateTime?
+}
+
+model AuditLog {
+  id          String          @id @default(uuid())
+  entityType  AuditEntityType
+  entityId    String
+  from        Json?
+  to          Json?
+  changedById String
+  changedBy   User            @relation(fields: [changedById], references: [id], onDelete: Restrict)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([entityType, entityId, createdAt])
+  @@index([changedById, createdAt])
 }
 
 model Address {

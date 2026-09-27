@@ -202,7 +202,8 @@ describe('Inventory API (PostgreSQL)', () => {
       quantity: 20,
     }).expect(201);
     expect(entry.body).toMatchObject({
-      performedById: actorId,
+      performedBy: { id: actorId },
+      supply: { id: item.id },
       quantity: 20,
       basketDeliveryId: null,
     });
@@ -334,9 +335,9 @@ describe('Inventory API (PostgreSQL)', () => {
     ).toEqual([4, 2]);
     expect(
       result.body.stockMovements.every(
-        (movement: { basketDeliveryId: string; performedById: string }) =>
+        (movement: { basketDeliveryId: string; performedBy: { id: string } }) =>
           movement.basketDeliveryId === result.body.id &&
-          movement.performedById === actorId,
+          movement.performedBy.id === actorId,
       ),
     ).toBe(true);
     expect(

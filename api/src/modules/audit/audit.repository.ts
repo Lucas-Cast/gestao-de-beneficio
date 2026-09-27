@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 
 @Injectable()
-export class BasketDeliveryRepository {
-  create(
+export class AuditRepository {
+  async create(
     tx: Prisma.TransactionClient,
-    data: Prisma.BasketDeliveryUncheckedCreateInput,
+    data: Prisma.AuditLogUncheckedCreateInput,
   ) {
-    return tx.basketDelivery.create({ data });
+    return tx.auditLog.create({ data });
   }
 }

@@ -9,6 +9,9 @@ import { createValidationPipe } from './common/validation/create-validation-pipe
 import { SupplyModule } from './modules/supply/supply.module';
 import { StockMovementModule } from './modules/stock-movement/stock-movement.module';
 import { BasketDeliveryModule } from './modules/basket-delivery/basket-delivery.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { BeneficiaryModule } from './modules/beneficiary/beneficiary.module';
+import { BasketModule } from './modules/basket/basket.module';
 
 @Module({
   imports: [
@@ -17,6 +20,9 @@ import { BasketDeliveryModule } from './modules/basket-delivery/basket-delivery.
     SupplyModule,
     StockMovementModule,
     BasketDeliveryModule,
+    AuditModule,
+    BeneficiaryModule,
+    BasketModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,39 +1,46 @@
-import { useCallback, useEffect } from 'react';
-import type { AxiosRequestConfig } from 'axios';
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { AxiosRequestConfig } from "axios";
 
-import { api } from '@/services/api/client';
+import { api } from "@/services/api/client";
+import { ApiRequestError, toApiError } from "@/services/api/errors";
 
-import { useApiRequest } from './use-api-request';
+import type { ApiNotificationOptions } from "./use-api-request";
 
 type UseApiGetOptions = {
   config?: AxiosRequestConfig;
   enabled?: boolean;
-};
+} & Pick<ApiNotificationOptions, "errorMessage">;
 
 export function useApiGet<TResponse>(
   url: string,
-  options: UseApiGetOptions = {},
+  { config, enabled = true, errorMessage }: UseApiGetOptions = {},
 ) {
-  const { config, enabled = true } = options;
-  const { execute: executeRequest, ...requestState } = useApiRequest<TResponse>();
-
-  const refetch = useCallback(
-    () =>
-      executeRequest(async () => {
-        const response = await api.get<TResponse>(url, config);
+  const client = useQueryClient();
+  const queryKey = ["api-get", url, config?.params ?? null] as const;
+  const query = useQuery<TResponse, ApiRequestError>({
+    queryKey,
+    enabled,
+    meta: { errorMessage },
+    queryFn: async ({ signal }) => {
+      try {
+        const response = await api.get<TResponse>(url, { ...config, signal });
         return response.data;
-      }),
-    [executeRequest, url, config],
-  );
-
-  useEffect(() => {
-    if (enabled) {
-      void refetch().catch(() => undefined);
-    }
-  }, [enabled, refetch]);
+      } catch (error) {
+        throw toApiError(error);
+      }
+    },
+  });
 
   return {
-    ...requestState,
-    refetch,
+    data: query.data ?? null,
+    loading: query.isFetching,
+    error: query.error,
+    refetch: async () => {
+      const result = await query.refetch();
+      if (result.error) throw result.error;
+      return result.data as TResponse;
+    },
+    cancel: () => client.cancelQueries({ queryKey, exact: true }),
+    reset: () => client.resetQueries({ queryKey, exact: true }),
   };
 }

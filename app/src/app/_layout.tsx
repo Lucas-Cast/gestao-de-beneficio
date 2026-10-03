@@ -1,32 +1,54 @@
-import '@/global.css';
+import "@/global.css";
 
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { QueryClientProvider } from "@tanstack/react-query";
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useColorScheme } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import { AppThemeProvider } from '@/components/app-theme-provider';
-import { AuthGuard } from '@/features/auth/components/auth-guard';
-import { UserProvider } from '@/context/user-context';
+import { AnimatedSplashOverlay } from "@/components/animated-icon";
+import { AppThemeProvider } from "@/components/app-theme-provider";
+import { AppToastHost } from "@/components/app-toast-host";
+import { Colors } from "@/constants/theme";
+import { UserProvider } from "@/context/user-context";
+import { queryClient } from "@/services/api/query-client";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const navigationTheme = colorScheme === "dark" ? DarkTheme : DefaultTheme;
+  const colors = Colors[colorScheme === "dark" ? "dark" : "light"];
 
   return (
-    <UserProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <AppThemeProvider>
-          <AuthGuard>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="(app)" />
-            </Stack>
-          </AuthGuard>
-          <AnimatedSplashOverlay />
-        </AppThemeProvider>
-      </ThemeProvider>
-    </UserProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <UserProvider>
+          <ThemeProvider
+            value={{
+              ...navigationTheme,
+              colors: {
+                ...navigationTheme.colors,
+                background: colors.background1,
+                card: colors.background2,
+                border: colors.border,
+                text: colors.text,
+                primary: colors.foregroundStrong,
+              },
+            }}
+          >
+            <AppThemeProvider>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="(app)" />
+                <Stack.Screen name="deliveries/new" />
+              </Stack>
+              <AnimatedSplashOverlay />
+              <AppToastHost />
+            </AppThemeProvider>
+          </ThemeProvider>
+        </UserProvider>
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }

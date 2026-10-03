@@ -254,11 +254,20 @@ services.
   screens should consume the normalized error instead of depending directly on
   Axios error internals.
 - Use the generic hooks in `src/hooks/api/`:
-  - `use-api-get.ts` performs GET requests on mount and exposes `refetch`.
+  - `use-api-get.ts` wraps TanStack Query for ordinary GET requests and exposes `refetch`.
   - `use-api-post.ts` exposes `execute(payload)` for mutations.
   - `use-api-delete.ts` exposes `execute()` for deletions.
-- These hooks expose `data`, `loading`, `error`, and `reset`. They do not
-  implement cache, invalidation, or feature-specific business rules.
+- Mount one `QueryClientProvider` at the app root. Use TanStack Query's
+  `useInfiniteQuery` for paginated reads and pass its `signal` to Axios so
+  inactive or obsolete requests are canceled. Do not implement pagination,
+  request generations, or `AbortController` manually in feature hooks.
+- For now, query state exists only in memory while observed: do not persist
+  query results, retain inactive query data, or add a cache/invalidation policy.
+  POST/DELETE hooks use TanStack Query's `useMutation`/`mutateAsync` for
+  pending, data, error, reset, and latest-call state. Do not recreate these
+  states with local React state or request-generation refs.
+- Generic hooks expose `data`, `loading`, `error`, and `reset`; feature hooks
+  own business-specific query keys, filters, and page parameters.
 - Compose generic request hooks inside feature hooks. For example,
   `src/features/auth/hooks/use-login.ts` should use `useApiPost` with
   `API_ROUTES.auth.login`, handle the login response, and persist its JWT.
@@ -278,6 +287,74 @@ services.
   English when appropriate; this rule applies to user-facing text.
 - When displaying an API error, use its normalized Portuguese message. Do not
   expose raw Axios, JavaScript, or infrastructure error messages to users.
+
+### Error and success notifications
+
+- User-facing operation errors and success messages must appear as toasts using
+  `react-native-toast-message`, including API failures, authentication feedback,
+  local-operation failures, and successful mutations. Frontend field-validation
+  errors are an exception: show them inline beside their corresponding fields.
+- Use a shared JavaScript notification service in `src/services/notifications.ts`.
+  Hooks and features call that service; they must not import the toast library
+  directly, render per-screen notification widgets, or duplicate notifications
+  with error/success banners, alerts, headings, or inline operation-error messages.
+  This restriction does not apply to inline frontend field-validation messages.
+- Render the shared `AppToastHost` at the application root within the theme and
+  safe-area boundaries. Keep it mounted across screen changes and authentication
+  redirects. Use centralized theme tokens and accessible Portuguese messages.
+- Keep the root Expo Router navigator mounted during authentication redirects.
+  Apply authentication guards at route/group boundaries without unmounting the
+  root navigator or root notification host; otherwise session changes can lose
+  toast feedback.
+- When a native modal needs its own toast host, `ThemedModal` owns this integration
+  and reuses the root host configuration and notification service. Features must
+  not manually install modal hosts. Follow the library's documented active-instance
+  behavior so a toast appears above the active modal.
+- Trigger notifications from the most general layer that owns the operation.
+  The shared TanStack Query cache owns normalized GET-error toasts;
+  `useApiRequest` uses TanStack Query mutation callbacks for mutation-error
+  and configured success toasts. Generic mutation hooks pass optional
+  operation-specific success/error messages into that common layer.
+  Keep notification options separate from Axios request configuration.
+- Retain API-hook error state and promise rejection semantics. Do not toast from
+  both Axios interceptors and request hooks, or repeat the same message from the
+  screen consuming the hook. Canceled and superseded requests do not notify.
+- Successful reads do not require a toast. When success feedback is needed,
+  mutation hooks use a configured Portuguese message. For composed operations,
+  notify only after the complete workflow succeeds; do not announce success
+  before session persistence or other required steps finish.
+- Errors from operations outside API requests, such as session persistence or
+  logout, are notified by their owning shared/feature hook through the same
+  service. Request-error normalization must not itself display a toast.
+- Use Zod with React Hook Form and `zodResolver` for frontend form validation.
+  Display each field's Portuguese validation message inline using `TextField`
+  or the corresponding field component, with invalid styling and accessibility
+  metadata. Do not also emit a toast for these errors, including invalid submits.
+  Keep React Hook Form's first-invalid-field focus behavior; do not introduce a
+  toast-oriented form-feedback hook for field validation.
+- Network, timeout, and unexpected errors need safe Portuguese fallbacks; never
+  forward raw JavaScript, Axios, or infrastructure text to a toast.
+- Loading indicators, empty states, instructions, confirmation prompts, and
+  factual summaries remain normal UI content. They are not error/success messages.
+
+### Shared UI boundaries
+
+- Create feature-independent visual primitives under `src/components/ui/`, such
+  as themed buttons/cards, `ThemedModal`, `SearchField`, `ThemedTable`, and empty
+  states. Keep global providers/hosts under `src/components/`.
+- Shared UI components are presentational: receive values, typed rows, children,
+  loading state, and callbacks. Do not fetch data, depend on feature contracts,
+  or embed business-specific filters, validation, or pagination rules.
+- Search debouncing and query logic belong to hooks; the generic search field
+  handles input, clearing, and presentation only. Table columns and domain row
+  renderers are supplied by the consuming feature.
+- Keep components used only for one feature within that feature, including
+  beneficiary/basket selectors, delivery composition/review/summary, home
+  indicators, and recent-delivery rows. Compose shared primitives rather than
+  turning these domain components into generic UI prematurely.
+- Reuse existing primitives such as `TextField`; do not create competing input
+  or notification implementations. Extract a feature-local component to shared
+  UI only when another feature actually needs its generic behavior.
 
 ### Dependency direction
 

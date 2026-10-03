@@ -1,27 +1,34 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useRouter } from 'expo-router';
-import { useForm } from 'react-hook-form';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "expo-router";
+import { useForm } from "react-hook-form";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  View,
+} from "react-native";
 
-import { TextField } from '@/components/text-field';
-import { ThemedText } from '@/components/themed-text';
+import { ThemedButton } from "@/components/ui/themed-button";
+import { TextField } from "@/components/text-field";
+import { ThemedText } from "@/components/themed-text";
 
-import { useRegister } from '../hooks/use-register';
-import { registerSchema, type RegisterFormValues } from '../validation/auth.schemas';
+import { useRegister } from "../hooks/use-register";
+import {
+  registerSchema,
+  type RegisterFormValues,
+} from "../validation/auth.schemas";
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { register, error: registerError, loading: registerLoading } = useRegister();
-  const {
-    control,
-    handleSubmit,
-  } = useForm<RegisterFormValues>({
+  const { register, loading: registerLoading } = useRegister();
+  const { control, handleSubmit } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
     },
   });
 
@@ -31,17 +38,19 @@ export default function RegisterScreen() {
       email: values.email.trim().toLowerCase(),
       password: values.password,
     });
-    router.replace('/login');
+    router.replace("/login");
   };
 
   return (
     <KeyboardAvoidingView
       className="flex-1 bg-background1"
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+      >
         <View className="mx-auto w-full max-w-md flex-1 justify-center px-6 py-10 sm:px-8">
           <View className="mb-8 gap-3">
             <ThemedText type="smallBold" themeColor="foreground">
@@ -102,28 +111,18 @@ export default function RegisterScreen() {
               editable={!registerLoading}
             />
 
-            {registerError ? (
-              <ThemedText themeColor="danger" type="small">
-                {registerError.message}
-              </ThemedText>
-            ) : null}
-
-            <Pressable
-              accessibilityRole="button"
-              disabled={registerLoading}
+            <ThemedButton
+              label={registerLoading ? "Criando conta..." : "Criar conta"}
+              loading={registerLoading}
               onPress={handleSubmit(onSubmit)}
-              className="h-14 items-center justify-center rounded-xl bg-foreground px-6 active:opacity-80 disabled:opacity-60">
-              <ThemedText type="smallBold" themeColor="textOnBackground2">
-                {registerLoading ? 'Criando conta...' : 'Criar conta'}
-              </ThemedText>
-            </Pressable>
+            />
           </View>
 
           <View className="mt-8 flex-row justify-center gap-1">
             <ThemedText themeColor="textSecondary" type="small">
               Já possui uma conta?
             </ThemedText>
-            <Pressable onPress={() => router.replace('/login')}>
+            <Pressable onPress={() => router.replace("/login")}>
               <ThemedText type="smallBold" themeColor="foreground">
                 Entrar
               </ThemedText>

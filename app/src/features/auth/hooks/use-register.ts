@@ -1,15 +1,18 @@
-import { useCallback } from 'react';
+import { useCallback } from "react";
 
-import { API_ROUTES } from '@/constants/routes';
-import { useApiPost } from '@/hooks/api/use-api-post';
+import { API_ROUTES } from "@/constants/routes";
+import { useApiPost } from "@/hooks/api/use-api-post";
 
-import type { RegisterPayload, RegisterResponse } from '../types/auth.types';
+import type { RegisterPayload, RegisterResponse } from "../types/auth.types";
 
 export function useRegister() {
   const { execute: executeRequest, ...requestState } = useApiPost<
     RegisterPayload,
     RegisterResponse
-  >(API_ROUTES.auth.register);
+  >(API_ROUTES.auth.register, undefined, {
+    successMessage:
+      "Cadastro realizado. Aguarde a ativação da sua conta para entrar.",
+  });
 
   const register = useCallback(
     async (payload: RegisterPayload) => executeRequest(payload),

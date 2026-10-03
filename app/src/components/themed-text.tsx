@@ -1,16 +1,18 @@
-import { Text, type TextProps } from 'react-native';
+import { Text, type TextProps } from "react-native";
 
-import { ThemeColor } from '@/constants/theme';
+import { ThemeColor } from "@/constants/theme";
 
 export type ThemedTextType =
-  | 'default'
-  | 'title'
-  | 'small'
-  | 'smallBold'
-  | 'subtitle'
-  | 'link'
-  | 'linkPrimary'
-  | 'code';
+  | "default"
+  | "title"
+  | "small"
+  | "smallBold"
+  | "subtitle"
+  | "heading"
+  | "metric"
+  | "link"
+  | "linkPrimary"
+  | "code";
 
 export type ThemedTextProps = TextProps & {
   className?: string;
@@ -19,37 +21,45 @@ export type ThemedTextProps = TextProps & {
 };
 
 const textTypeClasses: Record<ThemedTextType, string> = {
-  default: 'text-body',
-  title: 'text-title',
-  small: 'text-body-sm',
-  smallBold: 'text-body-sm-bold',
-  subtitle: 'text-subtitle',
-  link: 'text-link',
-  linkPrimary: 'text-link text-foreground',
-  code: 'text-code font-mono',
+  default: "text-body",
+  title: "text-title",
+  small: "text-body-sm",
+  smallBold: "text-body-sm-bold",
+  subtitle: "text-subtitle",
+  heading: "text-heading",
+  metric: "text-metric",
+  link: "text-link",
+  linkPrimary: "text-link text-foreground",
+  code: "text-code font-mono",
 };
 
 const textColorClasses: Partial<Record<ThemeColor, string>> = {
-  text: 'text-text',
-  textOnBackground2: 'text-textOnBackground2',
-  textSecondary: 'text-textSecondary',
-  muted: 'text-muted',
-  foreground: 'text-foreground',
-  foregroundStrong: 'text-foregroundStrong',
+  text: "text-text",
+  textOnBackground2: "text-textOnBackground2",
+  textOnForeground: "text-textOnForeground",
+  textMutedOnBackground2: "text-textMutedOnBackground2",
+  danger: "text-danger",
+  success: "text-success",
+  textSecondary: "text-textSecondary",
+  muted: "text-muted",
+  foreground: "text-foreground",
+  foregroundStrong: "text-foregroundStrong",
 };
 
 export function ThemedText({
   className,
   style,
-  type = 'default',
-  themeColor = 'text',
+  type = "default",
+  themeColor = "text",
   ...rest
 }: ThemedTextProps) {
-  const themeClassName = textColorClasses[themeColor] ?? 'text-text';
+  const themeClassName = textColorClasses[themeColor] ?? "text-text";
 
   return (
     <Text
-      className={[themeClassName, textTypeClasses[type], className].filter(Boolean).join(' ')}
+      className={[themeClassName, textTypeClasses[type], className]
+        .filter(Boolean)
+        .join(" ")}
       style={style}
       {...rest}
     />

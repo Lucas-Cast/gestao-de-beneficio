@@ -1,15 +1,17 @@
-import { useCallback } from 'react';
-import type { AxiosRequestConfig } from 'axios';
+import { useCallback } from "react";
+import type { AxiosRequestConfig } from "axios";
 
-import { api } from '@/services/api/client';
+import { api } from "@/services/api/client";
 
-import { useApiRequest } from './use-api-request';
+import { useApiRequest, type ApiNotificationOptions } from "./use-api-request";
 
 export function useApiDelete<TResponse = void>(
   url: string,
   config?: AxiosRequestConfig,
+  notifications?: ApiNotificationOptions,
 ) {
-  const { execute: executeRequest, ...requestState } = useApiRequest<TResponse>();
+  const { execute: executeRequest, ...requestState } =
+    useApiRequest<TResponse>(notifications);
 
   const execute = useCallback(
     () =>

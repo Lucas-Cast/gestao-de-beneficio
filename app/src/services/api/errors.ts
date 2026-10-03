@@ -1,4 +1,4 @@
-import { isAxiosError } from 'axios';
+import { isAxiosError } from "axios";
 
 export type ApiErrorData = {
   message: string;
@@ -14,7 +14,7 @@ export class ApiRequestError extends Error {
 
   constructor({ message, status, code, details }: ApiErrorData) {
     super(message);
-    this.name = 'ApiRequestError';
+    this.name = "ApiRequestError";
     this.status = status;
     this.code = code;
     this.details = details;
@@ -22,22 +22,21 @@ export class ApiRequestError extends Error {
 }
 
 function getResponseMessage(data: unknown): string | undefined {
-  if (typeof data === 'string') {
-    return data;
-  }
-
-  if (typeof data !== 'object' || data === null || !('message' in data)) {
+  if (typeof data !== "object" || data === null || !("message" in data)) {
     return undefined;
   }
 
   const message = data.message;
 
-  if (typeof message === 'string') {
+  if (typeof message === "string") {
     return message;
   }
 
-  if (Array.isArray(message) && message.every((item) => typeof item === 'string')) {
-    return message.join(', ');
+  if (
+    Array.isArray(message) &&
+    message.every((item) => typeof item === "string")
+  ) {
+    return message.join(", ");
   }
 
   return undefined;
@@ -51,9 +50,14 @@ export function toApiError(error: unknown): ApiRequestError {
   if (isAxiosError(error)) {
     return new ApiRequestError({
       message:
-        getResponseMessage(error.response?.data) ??
-        error.message ??
-        'Não foi possível concluir a requisição.',
+        (error.response && error.response.status < 500
+          ? getResponseMessage(error.response.data)
+          : undefined) ??
+        (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT"
+          ? "A requisição demorou mais que o esperado. Tente novamente."
+          : !error.response
+            ? "Não foi possível conectar ao servidor. Verifique sua conexão."
+            : "Não foi possível concluir a requisição."),
       status: error.response?.status,
       code: error.code,
       details: error.response?.data,
@@ -61,11 +65,14 @@ export function toApiError(error: unknown): ApiRequestError {
   }
 
   if (error instanceof Error) {
-    return new ApiRequestError({ message: error.message });
+    return new ApiRequestError({
+      message: "Ocorreu um erro inesperado.",
+      details: error,
+    });
   }
 
   return new ApiRequestError({
-    message: 'Ocorreu um erro inesperado.',
+    message: "Ocorreu um erro inesperado.",
     details: error,
   });
 }

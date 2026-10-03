@@ -6,11 +6,12 @@ import {
   useMemo,
   useState,
   type PropsWithChildren,
-} from 'react';
+} from "react";
 
-import { session } from '@/services/api/session';
+import { session } from "@/services/api/session";
 
-import type { AuthUser } from '@/features/auth/types/auth.types';
+import type { AuthUser } from "@/types/user";
+import { notifications } from "@/services/notifications";
 
 type UserContextValue = {
   user: AuthUser | null;
@@ -38,6 +39,9 @@ export function UserProvider({ children }: PropsWithChildren) {
       .catch(() => {
         if (mounted) {
           setUserState(null);
+          notifications.error(
+            "Não foi possível restaurar sua sessão. Entre novamente.",
+          );
         }
       })
       .finally(() => {
@@ -56,8 +60,14 @@ export function UserProvider({ children }: PropsWithChildren) {
   }, []);
 
   const logout = useCallback(async () => {
-    await session.clear();
+    try {
+      await session.clear();
+    } catch (error) {
+      notifications.error("Não foi possível sair da conta. Tente novamente.");
+      throw error;
+    }
     setUser(null);
+    notifications.success("Você saiu da conta.");
   }, [setUser]);
 
   const value = useMemo<UserContextValue>(
@@ -78,7 +88,7 @@ export function useUser() {
   const context = useContext(UserContext);
 
   if (!context) {
-    throw new Error('useUser deve ser usado dentro de UserProvider.');
+    throw new Error("useUser deve ser usado dentro de UserProvider.");
   }
 
   return context;

@@ -1,7 +1,4 @@
-export type AuthUser = {
-  name: string;
-  email: string;
-};
+export type { AuthUser } from "@/types/user";
 
 export type AuthResponse = {
   token: string;

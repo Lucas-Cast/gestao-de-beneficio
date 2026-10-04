@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Platform, View } from "react-native";
+import { View } from "react-native";
 
 import { Screen } from "@/components/screen";
 import { ThemedText } from "@/components/themed-text";
@@ -54,15 +54,6 @@ export function CrudScreenLayout({
               loading={primaryAction.loading}
               disabled={primaryAction.disabled}
               className="sm:min-w-48"
-            />
-          ) : null}
-          {onRefresh && Platform.OS === "web" ? (
-            <ThemedButton
-              label="Atualizar lista"
-              onPress={onRefresh}
-              loading={refreshing}
-              disabled={refreshing}
-              variant="secondary"
             />
           ) : null}
         </View>

@@ -69,8 +69,15 @@ not create a second source of truth for theme colors.
 ### Theme selection
 
 - System theme is the default.
-- If a manual light/dark/system selector is added, use NativeWind's color scheme API.
-- Persist a manual preference separately and provide a way to restore the system mode.
+- Manage the global preference through `src/context/theme-preference-context.tsx`
+  and NativeWind's color scheme API. Persist it through
+  `src/services/theme-preference.ts` (local storage on web and SecureStore on
+  native), and keep a control to restore the system mode in the “Mais” screen.
+- Keep `darkMode: "class"` in `tailwind.config.js`; NativeWind v4 needs class
+  mode for manual light/dark selection.
+- In `metro.config.js`, resolve NativeWind's CSS input, `projectRoot`, and
+  `configPath` from `__dirname` so starting Expo from another working directory
+  does not silently load the default media-based theme config.
 - Every new themed component must work in both light and dark modes and preserve
   readable contrast.
 
@@ -357,6 +364,9 @@ services.
 - Shared UI components are presentational: receive values, typed rows, children,
   loading state, and callbacks. Do not fetch data, depend on feature contracts,
   or embed business-specific filters, validation, or pagination rules.
+- On web list screens that provide `onRefresh`, pulling down from the top reloads
+  the whole page; do not add a duplicate refresh button. Native screens continue
+  using React Native's `RefreshControl` to refresh their data.
 - Search debouncing and query logic belong to hooks; the generic search field
   handles input, clearing, and presentation only. Table columns and domain row
   renderers are supplied by the consuming feature.

@@ -6,6 +6,7 @@ import { useTheme } from "@/hooks/use-theme";
 
 type Props = {
   label: string;
+  placeholder?: string;
   value: string;
   onChangeText: (value: string) => void;
   onSubmit?: () => void;
@@ -14,6 +15,7 @@ type Props = {
 
 export function SearchField({
   label,
+  placeholder,
   value,
   onChangeText,
   onSubmit,
@@ -27,7 +29,7 @@ export function SearchField({
         value={value}
         onChangeText={onChangeText}
         error={error}
-        placeholder={label}
+        placeholder={placeholder ?? label}
         autoCapitalize="none"
         autoCorrect={false}
         returnKeyType="search"

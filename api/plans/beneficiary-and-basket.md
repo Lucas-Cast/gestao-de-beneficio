@@ -27,7 +27,7 @@ Provide create, list, detail, update, and soft-delete operations.
 - Use the existing fields: `name`, `birthDate`, `sex` (`M` or `F`), `phone`, `cpf`, and address (`street`, `number`, optional `complement`, `neighborhood`, `city`, `state`, `postalCode`).
 - Manage beneficiary and address writes in one transaction. Address is not soft-deleted independently; soft-deleting its beneficiary retains the address and existing delivery history.
 - CPF must remain unique. Translate duplicate CPF constraints into a safe Portuguese conflict response.
-- Normal list and detail queries exclude beneficiaries with `deletedAt` set. Soft deletion retains beneficiary and delivery records; a deleted beneficiary cannot be used for a new delivery.
+- Normal list and detail queries exclude beneficiaries with `deletedAt` set. A separate paginated deleted-beneficiary list supports search/filtering, and an explicit restore operation clears `deletedAt` and writes an audit entry. Soft deletion retains beneficiary and delivery records; a deleted beneficiary cannot be used for a new delivery.
 - Update supports beneficiary fields and nested address changes. An omitted address in a partial update leaves the existing address unchanged.
 
 ## Basket module
@@ -96,7 +96,7 @@ Every business and operational rule in this plan must have explicit test coverag
 
 ### PostgreSQL integration tests
 
-- Beneficiary CRUD persists the address atomically, enforces unique CPF, and excludes soft-deleted records from normal reads.
+- Beneficiary CRUD persists the address atomically, enforces unique CPF across active and soft-deleted records, excludes deleted records from normal reads, and lists/restores deleted beneficiaries with audit history.
 - Basket creation persists its composition atomically, rejects deleted supplies, permits duplicate names, and exposes no update operation.
 - Basket soft deletion soft-deletes its active composition rows atomically and preserves delivery and stock-movement history.
 - Beneficiary create/update/delete and basket create/delete operations write one audit row with the correct entity type, entity ID, before/after JSON, actor, and timestamps.
@@ -107,8 +107,8 @@ Every business and operational rule in this plan must have explicit test coverag
 
 ## Implemented contracts and verification
 
-- Routes are `/beneficiaries` (POST/GET), `/beneficiaries/:id` (GET/PATCH/DELETE), `/baskets` (POST/GET), and `/baskets/:id` (GET/DELETE). There is no basket update or audit HTTP endpoint.
-- Lists use `page=1`, `pageSize=20` (maximum 100), `{ data, total, page, pageSize }`, and `createdAt DESC, id DESC`. Both support case-insensitive name `search`; beneficiaries also support exact normalized `cpf`.
+- Routes are `/beneficiaries` (POST/GET), `/beneficiaries/deleted` (GET), `/beneficiaries/:id` (GET/PATCH/DELETE), `/beneficiaries/:id/restore` (PATCH), `/baskets` (POST/GET), and `/baskets/:id` (GET/DELETE). There is no basket update or audit HTTP endpoint.
+- Lists use `page=1`, `pageSize=20` (maximum 100), and `{ data, total, page, pageSize }`. Active records are ordered by `createdAt DESC, id DESC`; deleted beneficiaries are ordered by `deletedAt DESC, id DESC`. Both beneficiary lists support case-insensitive name `search` and exact normalized `cpf`; basket lists support case-insensitive name `search`.
 - CPF check digits are validated and formatting is removed before persistence. CPF uniqueness includes deleted records. Birth dates are valid past/present calendar dates in `YYYY-MM-DD`; phone accepts a 10/11-digit Brazilian number with DDD, optionally prefixed by 55; CEP uses 8 digits and UF is normalized to uppercase.
 - Partial address updates preserve omitted fields, allow clearing `complement` with null, and reject null for required fields. Nested response objects do not repeat their IDs as foreign-key fields on the parent.
 - Audit comparison excludes automatic `createdAt`/`updatedAt` changes. No-op beneficiary updates still create a single audit row with empty objects. Address changes contain the complete prior/new address; basket snapshots contain composition rows rather than mutable supply catalog/balance data.

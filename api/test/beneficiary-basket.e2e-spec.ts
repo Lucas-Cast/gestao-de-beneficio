@@ -182,6 +182,37 @@ describe('Beneficiaries, baskets and audit (PostgreSQL)', () => {
     expect(await db().auditLog.count()).toBe(2);
   });
 
+  it('lists soft-deleted beneficiaries and restores them with an audit entry', async () => {
+    const created = await createBeneficiary();
+    await remove('/beneficiaries/' + created.body.id).expect(204);
+
+    // The unique CPF constraint includes soft-deleted rows.
+    await post('/beneficiaries', beneficiaryBody).expect(409);
+    expect((await get('/beneficiaries').expect(200)).body.total).toBe(0);
+
+    const deleted = await get('/beneficiaries/deleted?search=Ana').expect(200);
+    expect(deleted.body).toMatchObject({
+      total: 1,
+      data: [{ id: created.body.id, deletedAt: expect.any(String) }],
+    });
+
+    const restored = await patch(
+      '/beneficiaries/' + created.body.id + '/restore',
+      {},
+    ).expect(200);
+    expect(restored.body.deletedAt).toBeNull();
+    expect((await get('/beneficiaries/deleted').expect(200)).body.total).toBe(
+      0,
+    );
+    expect((await get('/beneficiaries').expect(200)).body.total).toBe(1);
+
+    const history = await logs(created.body.id);
+    expect(history).toHaveLength(3);
+    expect(history[2].changedById).toBe(actorId);
+    expect(history[2].from).toMatchObject({ deletedAt: expect.any(String) });
+    expect(history[2].to).toMatchObject({ deletedAt: null });
+  });
+
   it('requires an active JWT and rejects spoofed actors and invalid fields in Portuguese', async () => {
     await request(server()).get('/beneficiaries').expect(401);
     await request(server()).get('/baskets').expect(401);

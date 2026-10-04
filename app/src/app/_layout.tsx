@@ -42,6 +42,9 @@ export default function RootLayout() {
                 <Stack.Screen name="(auth)" />
                 <Stack.Screen name="(app)" />
                 <Stack.Screen name="deliveries/new" />
+                <Stack.Screen name="beneficiaries/new" />
+                <Stack.Screen name="beneficiaries/deleted" />
+                <Stack.Screen name="beneficiaries/[id]/edit" />
               </Stack>
               <AnimatedSplashOverlay />
               <AppToastHost />

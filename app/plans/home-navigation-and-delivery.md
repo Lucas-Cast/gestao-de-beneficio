@@ -37,7 +37,7 @@ These references were generated with the built-in image generation tool. No addi
 - Indicators: **Cestas entregues hoje**, **Beneficiários atendidos hoje**, and **Cestas entregues no mês**. Initial mock values: 12, 10, and 148.
 - Display “Dados demonstrativos” above the indicators and “Demonstração” beside recent deliveries. Demonstration entries are not clickable.
 - **Entregas:** functional “Registrar entrega” action and “Histórico de entregas ainda não disponível.”
-- **Beneficiários:** informative placeholder; beneficiary management is reserved for a later stage.
+- **Beneficiários:** implement the searchable management experience specified in [its feature plan](./beneficiary-management.md).
 - **Mais:** logged-in user's name and email, existing logout action, and disabled “Cestas” and “Estoque” entries marked “Em breve”.
 - Registration opens at `/deliveries/new`, outside the tab shell, with a back action.
 
@@ -101,6 +101,7 @@ Create these generic visual primitives under `src/components/ui/`; keep their co
 | `SearchField` | Controlled `value`, change handler, optional submit handler, placeholder, search icon, and clear action. No fetching, debounce, pagination, or knowledge of CPF. | Beneficiary and basket searches. |
 | `ThemedTable<T>` | Typed rows, column definitions with cell renderers, stable row keys, optional row-selection callback, loading/empty presentation, and accessible headers. No API calls, domain filters, sorting policy, or automatic pagination. | Desktop recent deliveries and desktop selector results. |
 | `ThemedEmptyState` | Title, optional explanatory text, and optional action; no domain decisions. | Placeholder tabs, empty selector results, and table empty states. |
+| `CrudScreenLayout` | Reusable responsive CRUD page shell with title/description, optional primary action, toolbar slot, content, and footer slots. It owns presentation only—not data fetching, forms, or domain actions. | Beneficiaries first; future CRUD features. |
 
 Reuse `TextField` rather than introducing a second form-input component. Keep its React Hook Form contract compatible; expose its existing controlled input primitive for `SearchField` to reuse styling without requiring a form instance. Preserve its inline field-validation messages, invalid styling, and accessibility metadata; selectors and quantity controls follow the same field-feedback pattern.
 
@@ -132,7 +133,7 @@ Do not create a generic selector, KPI widget, quantity stepper, or summary abstr
 
 ## Implementation and verification notes
 
-- Route adapters delegate to home, delivery, beneficiary-placeholder, and account features. Registration uses the existing API contracts; no backend files were changed.
+- Route adapters delegate to home, delivery, beneficiaries, and account features. Beneficiary management uses the shared CRUD page layout and existing endpoints; registration uses existing API contracts. No backend files were changed.
 - Keep the root navigator and root toast host mounted. Apply the existing authentication guard at the authenticated tab layout, authentication layout, and standalone delivery route. Unmounting the root navigator during an authentication redirect resets notification state and loses logout feedback.
 - GET requests expose cancellation. Selector searches abort and invalidate pending requests when closed or superseded, including the debounce interval, and keep pagination/results scoped to the current search.
 - The shared user contract lives in `src/types/user.ts`, so global context does not depend on authentication feature types.

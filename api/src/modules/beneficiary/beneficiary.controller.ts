@@ -55,6 +55,13 @@ export class BeneficiaryController {
     return this.service.findAll(query);
   }
 
+  @Get('deleted')
+  @ApiOperation({ summary: 'Lista beneficiários excluídos logicamente' })
+  @ApiOkResponse({ type: BeneficiaryPageDto })
+  findDeleted(@Query() query: ListBeneficiariesDto) {
+    return this.service.findDeleted(query);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Consulta um beneficiário' })
   @ApiOkResponse({ type: BeneficiaryResponseDto })
@@ -82,5 +89,15 @@ export class BeneficiaryController {
     @Req() request: Request & { user: { id: string } },
   ) {
     return this.service.remove(id, request.user.id);
+  }
+
+  @Patch(':id/restore')
+  @ApiOperation({ summary: 'Restaura um beneficiário excluído logicamente' })
+  @ApiOkResponse({ type: BeneficiaryResponseDto })
+  restore(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request & { user: { id: string } },
+  ) {
+    return this.service.restore(id, request.user.id);
   }
 }

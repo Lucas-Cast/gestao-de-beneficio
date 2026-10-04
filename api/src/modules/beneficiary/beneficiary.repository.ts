@@ -41,6 +41,43 @@ export class BeneficiaryRepository {
     );
   }
 
+  findDeleted(query: ListBeneficiariesDto) {
+    const where: Prisma.BeneficiaryWhereInput = {
+      deletedAt: { not: null },
+      cpf: query.cpf,
+      name: query.search
+        ? { contains: query.search, mode: 'insensitive' }
+        : undefined,
+    };
+    return paginate(
+      query,
+      ({ skip, take }) =>
+        this.database.beneficiary.findMany({
+          where,
+          include: { address: true },
+          skip,
+          take,
+          orderBy: [{ deletedAt: 'desc' }, { id: 'desc' }],
+        }),
+      () => this.database.beneficiary.count({ where }),
+    );
+  }
+
+  findDeletedById(id: string, tx: Prisma.TransactionClient) {
+    return tx.beneficiary.findFirst({
+      where: { id, deletedAt: { not: null } },
+      include: { address: true },
+    });
+  }
+
+  restore(tx: Prisma.TransactionClient, id: string) {
+    return tx.beneficiary.update({
+      where: { id, deletedAt: { not: null } },
+      data: { deletedAt: null },
+      include: { address: true },
+    });
+  }
+
   async update(
     tx: Prisma.TransactionClient,
     id: string,

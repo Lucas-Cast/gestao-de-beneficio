@@ -44,6 +44,41 @@ test("only configured mutation success notifies, ordinary reads do not", async (
     "Entrega registrada com sucesso.",
   );
 });
+
+test("run handles mutation callbacks without returning a rejecting promise", async () => {
+  const onSuccess = jest.fn();
+  const { result } = await renderHook(
+    () => useApiRequest({ successMessage: "Concluído." }),
+    { wrapper },
+  );
+
+  await act(async () => {
+    result.current.run(() => Promise.resolve("saved"), { onSuccess });
+    await waitFor(() => expect(onSuccess).toHaveBeenCalledWith("saved"));
+  });
+
+  expect(notifications.success).toHaveBeenCalledWith("Concluído.");
+});
+
+test("run routes failed mutations to the common toast and error callback", async () => {
+  const onError = jest.fn();
+  const { result } = await renderHook(() => useApiRequest(), { wrapper });
+
+  await act(async () => {
+    result.current.run(() => Promise.reject(new Error("database details")), {
+      onError,
+    });
+    await waitFor(() => expect(onError).toHaveBeenCalledTimes(1));
+  });
+
+  expect(onError).toHaveBeenCalledWith(
+    expect.objectContaining({ message: "Ocorreu um erro inesperado." }),
+  );
+  expect(notifications.error).toHaveBeenCalledTimes(1);
+  expect(notifications.error).toHaveBeenCalledWith(
+    "Ocorreu um erro inesperado.",
+  );
+});
 test("canceled and superseded requests never notify or overwrite current data", async () => {
   const { result } = await renderHook(() => useApiRequest<string>(), {
     wrapper,

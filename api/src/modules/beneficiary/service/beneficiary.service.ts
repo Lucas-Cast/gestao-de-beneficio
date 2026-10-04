@@ -61,6 +61,18 @@ export class BeneficiaryService {
     });
   }
 
+  findDeleted(query: ListBeneficiariesDto) {
+    return withHttpErrors(async () => {
+      const { data, total } = await this.repository.findDeleted(query);
+      return {
+        data: BeneficiaryDomain.fromPrismaMany(data),
+        total,
+        page: query.page,
+        pageSize: query.pageSize,
+      };
+    });
+  }
+
   findOne(id: string) {
     return withHttpErrors(async () => {
       const record = await this.repository.findById(id);
@@ -121,6 +133,31 @@ export class BeneficiaryService {
             after,
             actorId,
           );
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      ),
+    );
+  }
+
+  restore(id: string, actorId: string) {
+    return withHttpErrors(() =>
+      this.database.$transaction(
+        async (tx) => {
+          const deleted = await this.repository.findDeletedById(id, tx);
+          if (!deleted) throw new DomainError('BENEFICIARY_NOT_FOUND');
+          const before = BeneficiaryDomain.fromPrisma(deleted);
+          const after = BeneficiaryDomain.fromPrisma(
+            await this.repository.restore(tx, id),
+          );
+          await this.audit.record(
+            tx,
+            'BENEFICIARY',
+            id,
+            before,
+            after,
+            actorId,
+          );
+          return after;
         },
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       ),

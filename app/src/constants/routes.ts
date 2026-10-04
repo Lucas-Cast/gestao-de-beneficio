@@ -1,5 +1,10 @@
 export const API_ROUTES = {
-  beneficiaries: { collection: "/beneficiaries" },
+  beneficiaries: {
+    collection: "/beneficiaries",
+    deleted: "/beneficiaries/deleted",
+    byId: (id: string) => `/beneficiaries/${id}`,
+    restore: (id: string) => `/beneficiaries/${id}/restore`,
+  },
   baskets: { collection: "/baskets" },
   basketDeliveries: { collection: "/basket-deliveries" },
   auth: {

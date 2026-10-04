@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -13,9 +14,15 @@ import { api } from "@/services/api/client";
 import BeneficiariesScreen from "./beneficiaries-screen";
 
 const mockPush = jest.fn();
+let mockFocus: (() => void) | undefined;
 
 jest.mock("expo-router", () => ({
   useRouter: () => ({ push: mockPush }),
+  useFocusEffect: (callback: () => void) => {
+    const { useEffect } = jest.requireActual<typeof import("react")>("react");
+    mockFocus = callback;
+    useEffect(callback, [callback]);
+  },
 }));
 jest.mock("@/services/api/client", () => ({
   api: {
@@ -73,11 +80,14 @@ function renderScreen() {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockFocus = undefined;
   mockGet.mockImplementation(async (url) => ({
     data:
       url === "/beneficiaries"
         ? { data: [beneficiary], total: 1, page: 1, pageSize: 20 }
-        : beneficiary,
+        : url === "/audit-logs"
+          ? { data: [], total: 0, page: 1, pageSize: 20 }
+          : beneficiary,
   }));
   mockDelete.mockResolvedValue({ data: undefined });
 });
@@ -138,4 +148,48 @@ test("opens the deleted-beneficiaries screen", async () => {
   await screen.findAllByText("Ana Souza");
   await fireEvent.press(screen.getByRole("button", { name: "Ver excluídos" }));
   expect(mockPush).toHaveBeenCalledWith("/beneficiaries/deleted");
+});
+
+test("opens the shared beneficiary audit modal", async () => {
+  await renderScreen();
+  await screen.findAllByText("Ana Souza");
+  await fireEvent.press(screen.getByRole("button", { name: "Ver histórico" }));
+  expect(await screen.findByText("Histórico de beneficiários")).toBeTruthy();
+  expect(mockGet).toHaveBeenCalledWith(
+    "/audit-logs",
+    expect.objectContaining({
+      params: { entityType: "BENEFICIARY", page: 1, pageSize: 20 },
+    }),
+  );
+});
+
+test("refreshes the active list when the screen regains focus", async () => {
+  await renderScreen();
+  await screen.findAllByText("Ana Souza");
+  expect(mockGet).toHaveBeenCalledTimes(1);
+
+  await act(() => mockFocus?.());
+
+  await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(2));
+  expect(mockGet.mock.calls[1][0]).toBe("/beneficiaries");
+});
+
+test("pulling down reloads changes made on another device", async () => {
+  await renderScreen();
+  await screen.findAllByText("Ana Souza");
+
+  mockGet.mockResolvedValue({
+    data: { data: [], total: 0, page: 1, pageSize: 20 },
+  });
+
+  await act(() =>
+    screen
+      .getByTestId("screen-scroll-view")
+      .props.refreshControl.props.onRefresh(),
+  );
+
+  expect(
+    await screen.findByText("Nenhum beneficiário encontrado."),
+  ).toBeTruthy();
+  expect(mockGet).toHaveBeenCalledTimes(2);
 });

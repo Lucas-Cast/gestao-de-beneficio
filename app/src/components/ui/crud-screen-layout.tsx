@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { View } from "react-native";
+import { Platform, View } from "react-native";
 
 import { Screen } from "@/components/screen";
 import { ThemedText } from "@/components/themed-text";
@@ -20,6 +20,8 @@ export type CrudScreenLayoutProps = {
   toolbar?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
+  refreshing?: boolean;
+  onRefresh?: () => void;
 };
 
 /** Shared CRUD page presentation; data and feature behavior stay with callers. */
@@ -30,9 +32,11 @@ export function CrudScreenLayout({
   toolbar,
   children,
   footer,
+  refreshing,
+  onRefresh,
 }: CrudScreenLayoutProps) {
   return (
-    <Screen>
+    <Screen refreshing={refreshing} onRefresh={onRefresh}>
       <View className="gap-5">
         <View className="gap-4 sm:flex-row sm:items-center sm:justify-between">
           <View className="min-w-0 flex-1 gap-1">
@@ -50,6 +54,15 @@ export function CrudScreenLayout({
               loading={primaryAction.loading}
               disabled={primaryAction.disabled}
               className="sm:min-w-48"
+            />
+          ) : null}
+          {onRefresh && Platform.OS === "web" ? (
+            <ThemedButton
+              label="Atualizar lista"
+              onPress={onRefresh}
+              loading={refreshing}
+              disabled={refreshing}
+              variant="secondary"
             />
           ) : null}
         </View>

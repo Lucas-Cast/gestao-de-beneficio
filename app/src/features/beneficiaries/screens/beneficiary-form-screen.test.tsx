@@ -128,9 +128,27 @@ test("keeps business fields editable and changes birth date through the calendar
     "Cidade",
     "Estado (UF)",
   ]);
-  expect(screen.getByRole("radio", { name: "Feminino" }).props.disabled).not.toBe(
-    true,
+  expect(
+    screen.getByRole("radio", { name: "Feminino" }).props.disabled,
+  ).not.toBe(true);
+});
+
+test("lets the user choose a birth year by pressing the month and year", async () => {
+  await renderFormScreen("beneficiary-1");
+  await screen.findByLabelText("CPF");
+
+  await fireEvent.press(
+    screen.getByRole("button", { name: "Data de nascimento" }),
   );
+  await fireEvent.press(
+    screen.getByRole("button", { name: "Escolher ano, janeiro de 1990" }),
+  );
+  await fireEvent.press(
+    screen.getByRole("button", { name: "Selecionar ano 1985" }),
+  );
+  await fireEvent.press(screen.getByLabelText("Selecionar 02/01/1985"));
+
+  expect(screen.getByDisplayValue("02/01/1985")).toBeTruthy();
 });
 
 test("looks up the prefilled CEP when editing a beneficiary", async () => {
@@ -222,7 +240,9 @@ test("shows form validation beside fields without sending a toast", async () => 
     screen.getByRole("button", { name: "Salvar beneficiário" }),
   );
 
-  expect(await screen.findByText("Informe o nome do beneficiário.")).toBeTruthy();
+  expect(
+    await screen.findByText("Informe o nome do beneficiário."),
+  ).toBeTruthy();
   expect(notifications.error).not.toHaveBeenCalled();
   expect(notifications.success).not.toHaveBeenCalled();
 });

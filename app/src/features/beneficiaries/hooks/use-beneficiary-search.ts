@@ -86,6 +86,7 @@ export function useBeneficiarySearch(text: string, includeDeleted = false) {
     rows: rows as Beneficiary[],
     total: query.data?.pages[0]?.total ?? 0,
     loading: query.isFetching || (waitingForDebounce && !validation.error),
+    refreshing: query.isRefetching && !query.isFetchingNextPage,
     loadingMore: query.isFetchingNextPage,
     error: ready ? query.error : null,
     validationError: validation.error,

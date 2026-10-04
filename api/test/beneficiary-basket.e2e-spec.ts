@@ -133,6 +133,64 @@ describe('Beneficiaries, baskets and audit (PostgreSQL)', () => {
     expect(await db().auditLog.count()).toBe(2);
   });
 
+  it('lists audit changes by entity type, entity, actor and page without exposing credentials', async () => {
+    const beneficiary = await createBeneficiary();
+    await patch('/beneficiaries/' + beneficiary.body.id, {
+      name: 'Ana Souza',
+    }).expect(200);
+    const basket = await createBasket();
+
+    const first = await get('/audit-logs')
+      .query({ entityType: 'BENEFICIARY', pageSize: 1 })
+      .expect(200);
+    expect(first.body).toMatchObject({ total: 2, page: 1, pageSize: 1 });
+    expect(first.body.data[0]).toMatchObject({
+      entityType: 'BENEFICIARY',
+      entityId: beneficiary.body.id,
+      from: { name: 'Ana' },
+      to: { name: 'Ana Souza' },
+      changedBy: { id: actorId, name: 'Operador' },
+    });
+    expect(first.body.data[0]).not.toHaveProperty('changedById');
+    expect(first.body.data[0].changedBy).not.toHaveProperty('password');
+
+    const second = await get('/audit-logs')
+      .query({ entityType: 'BENEFICIARY', pageSize: 1, page: 2 })
+      .expect(200);
+    expect(second.body.total).toBe(2);
+    expect(second.body.data[0].id).not.toBe(first.body.data[0].id);
+
+    const baskets = await get('/audit-logs')
+      .query({ entityType: 'BASKET' })
+      .expect(200);
+    expect(baskets.body.data).toEqual([
+      expect.objectContaining({ entityId: basket.response.body.id }),
+    ]);
+    expect(
+      (
+        await get('/audit-logs')
+          .query({ entityId: beneficiary.body.id })
+          .expect(200)
+      ).body.total,
+    ).toBe(2);
+    expect(
+      (await get('/audit-logs').query({ changedById: actorId }).expect(200))
+        .body.total,
+    ).toBe(3);
+    expect((await get('/audit-logs').expect(200)).body.total).toBe(3);
+
+    await request(server()).get('/audit-logs').expect(401);
+    await get('/audit-logs').query({ entityType: 'USER' }).expect(400);
+    await get('/audit-logs').query({ entityId: 'invalid' }).expect(400);
+    await get('/audit-logs').query({ pageSize: 101 }).expect(400);
+    await get('/audit-logs')
+      .query({
+        from: '2026-10-01T00:00:00.000Z',
+        to: '2026-09-01T00:00:00.000Z',
+      })
+      .expect(400);
+  });
+
   it('updates only requested fields, audits address changes and keeps the address when omitted', async () => {
     const created = await createBeneficiary();
     const updated = await patch('/beneficiaries/' + created.body.id, {

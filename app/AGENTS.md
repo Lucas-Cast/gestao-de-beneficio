@@ -261,6 +261,10 @@ services.
   `useInfiniteQuery` for paginated reads and pass its `signal` to Axios so
   inactive or obsolete requests are canceled. Do not implement pagination,
   request generations, or `AbortController` manually in feature hooks.
+- Native tab and stack screens may stay mounted while unfocused. Revalidate
+  screen-specific reads when a route regains focus with Expo Router's
+  `useFocusEffect` and the relevant TanStack Query key. Avoid a duplicate
+  initial fetch and preserve unsaved form values when returning to a form.
 - For now, query state exists only in memory while observed: do not persist
   query results, retain inactive query data, or add a cache/invalidation policy.
   POST/DELETE hooks use TanStack Query's `useMutation`/`mutateAsync` for
@@ -342,6 +346,14 @@ services.
 - Create feature-independent visual primitives under `src/components/ui/`, such
   as themed buttons/cards, `ThemedModal`, `SearchField`, `ThemedTable`, and empty
   states. Keep global providers/hosts under `src/components/`.
+- The reusable audit viewer is a component package under
+  `src/components/AuditHistoryModal/`. Keep its modal, query hook, contracts,
+  display helpers, and tests inside that folder (using `hooks/`, `types/`, and
+  `utils/` subfolders where appropriate). Features provide an audit entity type
+  and optional entity/actor IDs. The modal owns the inclusive date-range filter
+  and paginated query; do not create feature-specific audit viewers. This
+  package is an intentional data-owning exception; other shared UI primitives
+  remain presentational.
 - Shared UI components are presentational: receive values, typed rows, children,
   loading state, and callbacks. Do not fetch data, depend on feature contracts,
   or embed business-specific filters, validation, or pagination rules.

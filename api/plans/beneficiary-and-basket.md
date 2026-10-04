@@ -51,7 +51,7 @@ Add an `AuditLog` Prisma model with these fields:
 - `changedById`: foreign key to `User`, using restrictive deletion behavior; users are soft-deleted by the application.
 - `createdAt` and `updatedAt`: standard timestamps. Audit records are append-only; `updatedAt` is not changed by normal application operations.
 
-Add indexes for `(entityType, entityId, createdAt)` and `(changedById, createdAt)`. PostgreSQL JSON fields should use the Prisma/PostgreSQL JSON representation. Do not add an audit query endpoint in this scope.
+Add indexes for `(entityType, entityId, createdAt)` and `(changedById, createdAt)`. PostgreSQL JSON fields should use the Prisma/PostgreSQL JSON representation. The original implementation scope did not include an audit query endpoint; a later extension adds one below.
 
 Write exactly one audit record per successful beneficiary create, update, or soft-delete command, and per successful basket create or soft-delete command. Insert it within the same database transaction as the domain change. If the domain transaction fails, its audit record must also roll back.
 
@@ -106,6 +106,8 @@ Every business and operational rule in this plan must have explicit test coverag
 - API validation and business errors use Portuguese messages and never expose database details.
 
 ## Implemented contracts and verification
+
+- A later extension exposes authenticated `GET /audit-logs` with `entityType` (`BENEFICIARY` or `BASKET`), optional `entityId`, `changedById`, creation-date range, and standard pagination. Responses include `from`/`to` changes and the safe actor profile, ordered newest first. The beneficiary app history uses `entityType=BENEFICIARY`.
 
 - Routes are `/beneficiaries` (POST/GET), `/beneficiaries/deleted` (GET), `/beneficiaries/:id` (GET/PATCH/DELETE), `/beneficiaries/:id/restore` (PATCH), `/baskets` (POST/GET), and `/baskets/:id` (GET/DELETE). There is no basket update or audit HTTP endpoint.
 - Lists use `page=1`, `pageSize=20` (maximum 100), and `{ data, total, page, pageSize }`. Active records are ordered by `createdAt DESC, id DESC`; deleted beneficiaries are ordered by `deletedAt DESC, id DESC`. Both beneficiary lists support case-insensitive name `search` and exact normalized `cpf`; basket lists support case-insensitive name `search`.

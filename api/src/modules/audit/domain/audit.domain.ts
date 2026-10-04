@@ -1,4 +1,5 @@
-export type AuditEntity = 'BENEFICIARY' | 'BASKET';
+export const AUDIT_ENTITY_TYPES = ['BENEFICIARY', 'BASKET'] as const;
+export type AuditEntity = (typeof AUDIT_ENTITY_TYPES)[number];
 export type AuditValue =
   | string
   | number

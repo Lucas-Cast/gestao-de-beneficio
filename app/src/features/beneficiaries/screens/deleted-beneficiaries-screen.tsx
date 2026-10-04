@@ -10,6 +10,7 @@ import { ThemedEmptyState } from "@/components/ui/themed-empty-state";
 import { useTheme } from "@/hooks/use-theme";
 
 import { useBeneficiarySearch } from "../hooks/use-beneficiary-search";
+import { useRefreshBeneficiariesOnFocus } from "../hooks/use-refresh-beneficiaries-on-focus";
 import { useRestoreBeneficiary } from "../hooks/use-restore-beneficiary";
 import {
   formatCpfForDisplay,
@@ -21,12 +22,15 @@ export default function DeletedBeneficiariesScreen() {
   const colors = useTheme();
   const [search, setSearch] = useState("");
   const beneficiaries = useBeneficiarySearch(search, true);
+  useRefreshBeneficiariesOnFocus(true);
   const restoration = useRestoreBeneficiary();
 
   return (
     <CrudScreenLayout
       title="Beneficiários excluídos"
       description="Consulte os cadastros removidos e restaure quem deve voltar a ficar ativo."
+      refreshing={beneficiaries.refreshing}
+      onRefresh={beneficiaries.retry}
       primaryAction={{
         label: "Voltar aos beneficiários",
         onPress: () => router.replace("/(app)/beneficiaries"),

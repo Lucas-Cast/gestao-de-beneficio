@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../../generated/prisma/client';
 import { DomainError } from '../../../common/errors/domain-error';
+import { withHttpErrors } from '../../../common/errors/to-http-exception';
 import { UserService } from '../../user/service/user.service';
+import { UserDomain } from '../../user/domain/user.domain';
 import { AuditRepository } from '../audit.repository';
 import { AuditDomain, AuditEntity } from '../domain/audit.domain';
+import { ListAuditLogsDto } from '../dto/list-audit-logs.dto';
 
 @Injectable()
 export class AuditService {
@@ -33,5 +36,31 @@ export class AuditService {
         to: changes.to,
       }),
     );
+  }
+
+  findAll(query: ListAuditLogsDto) {
+    return withHttpErrors(async () => {
+      if (query.from && query.to && query.from > query.to)
+        throw new DomainError('INVALID_DATE_RANGE');
+      const { data, total } = await this.repository.findAll(query);
+      return {
+        data: data.map((record) => {
+          const audit = AuditDomain.fromPrisma(record).record;
+          return {
+            id: audit.id,
+            entityType: audit.entityType,
+            entityId: audit.entityId,
+            from: audit.from,
+            to: audit.to,
+            createdAt: audit.createdAt,
+            updatedAt: audit.updatedAt,
+            changedBy: UserDomain.fromPrisma(record.changedBy),
+          };
+        }),
+        total,
+        page: query.page,
+        pageSize: query.pageSize,
+      };
+    });
   }
 }

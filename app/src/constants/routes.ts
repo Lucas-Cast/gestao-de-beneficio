@@ -1,4 +1,5 @@
 export const API_ROUTES = {
+  auditLogs: { collection: "/audit-logs" },
   beneficiaries: {
     collection: "/beneficiaries",
     deleted: "/beneficiaries/deleted",

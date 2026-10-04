@@ -8,15 +8,14 @@ import { SearchField } from "@/components/ui/search-field";
 import { ThemedButton } from "@/components/ui/themed-button";
 import { ThemedEmptyState } from "@/components/ui/themed-empty-state";
 import { ThemedTable, type TableColumn } from "@/components/ui/themed-table";
+import { AuditHistoryModal } from "@/components/AuditHistoryModal";
 import { useTheme } from "@/hooks/use-theme";
 
 import { BeneficiaryDetailsModal } from "../components/beneficiary-details-modal";
 import { useBeneficiarySearch } from "../hooks/use-beneficiary-search";
+import { useRefreshBeneficiariesOnFocus } from "../hooks/use-refresh-beneficiaries-on-focus";
 import type { Beneficiary } from "../types/beneficiary.types";
-import {
-  formatCpfForDisplay,
-  formatPhone,
-} from "../utils/beneficiary-format";
+import { formatCpfForDisplay, formatPhone } from "../utils/beneficiary-format";
 
 const columns: readonly TableColumn<Beneficiary>[] = [
   {
@@ -66,7 +65,9 @@ export default function BeneficiariesScreen() {
   const colors = useTheme();
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showAuditHistory, setShowAuditHistory] = useState(false);
   const beneficiaries = useBeneficiarySearch(search);
+  useRefreshBeneficiariesOnFocus();
 
   const openEdit = (id: string) => {
     router.push({ pathname: "/beneficiaries/[id]/edit", params: { id } });
@@ -77,6 +78,8 @@ export default function BeneficiariesScreen() {
       <CrudScreenLayout
         title="Beneficiários"
         description="Consulte e mantenha os cadastros da instituição."
+        refreshing={beneficiaries.refreshing}
+        onRefresh={beneficiaries.retry}
         primaryAction={{
           label: "Novo beneficiário",
           onPress: () => router.push("/beneficiaries/new"),
@@ -96,6 +99,12 @@ export default function BeneficiariesScreen() {
               label="Ver excluídos"
               variant="secondary"
               onPress={() => router.push("/beneficiaries/deleted")}
+              className="sm:min-w-40"
+            />
+            <ThemedButton
+              label="Ver histórico"
+              variant="secondary"
+              onPress={() => setShowAuditHistory(true)}
               className="sm:min-w-40"
             />
           </View>
@@ -174,7 +183,10 @@ export default function BeneficiariesScreen() {
                     >
                       {beneficiary.name}
                     </ThemedText>
-                    <ThemedText type="small" themeColor="textMutedOnBackground2">
+                    <ThemedText
+                      type="small"
+                      themeColor="textMutedOnBackground2"
+                    >
                       Ver detalhes
                     </ThemedText>
                   </View>
@@ -182,8 +194,12 @@ export default function BeneficiariesScreen() {
                     <ThemedText type="small" themeColor="textOnBackground2">
                       CPF: {formatCpfForDisplay(beneficiary.cpf)}
                     </ThemedText>
-                    <ThemedText type="small" themeColor="textMutedOnBackground2">
-                      {formatPhone(beneficiary.phone)} · {beneficiary.address.city} - {beneficiary.address.state}
+                    <ThemedText
+                      type="small"
+                      themeColor="textMutedOnBackground2"
+                    >
+                      {formatPhone(beneficiary.phone)} ·{" "}
+                      {beneficiary.address.city} - {beneficiary.address.state}
                     </ThemedText>
                   </View>
                 </Pressable>
@@ -210,6 +226,11 @@ export default function BeneficiariesScreen() {
         id={selectedId}
         onClose={() => setSelectedId(null)}
         onEdit={openEdit}
+      />
+      <AuditHistoryModal
+        visible={showAuditHistory}
+        onClose={() => setShowAuditHistory(false)}
+        entityType="BENEFICIARY"
       />
     </>
   );

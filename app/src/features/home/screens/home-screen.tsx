@@ -4,14 +4,16 @@ import { Screen } from "@/components/screen";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedButton } from "@/components/ui/themed-button";
 import { useUser } from "@/context/user-context";
+import { useRefreshQueries } from "@/hooks/use-refresh-queries";
 import { useHomeOverview } from "../hooks/use-home-overview";
 import { HomeIndicators } from "../components/home-indicators";
 import { RecentDeliveries } from "../components/recent-deliveries";
 export default function HomeScreen() {
   const { user } = useUser();
+  const { refreshing, refresh } = useRefreshQueries();
   const overview = useHomeOverview();
   return (
-    <Screen>
+    <Screen refreshing={refreshing} onRefresh={refresh}>
       <View className="gap-2">
         <ThemedText type="heading">
           Olá, {user?.name.trim().split(/\s+/)[0]}!

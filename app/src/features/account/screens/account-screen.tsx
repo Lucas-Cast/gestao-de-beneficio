@@ -7,14 +7,16 @@ import { ThemedButton } from "@/components/ui/themed-button";
 import { ThemedCard } from "@/components/ui/themed-card";
 import { useThemePreference } from "@/context/theme-preference-context";
 import { useUser } from "@/context/user-context";
+import { useRefreshQueries } from "@/hooks/use-refresh-queries";
 
 export default function AccountScreen() {
   const { user, logout } = useUser();
+  const { refreshing, refresh } = useRefreshQueries();
   const { activeScheme, preference, ready, setPreference } =
     useThemePreference();
   const [pending, setPending] = useState(false);
   return (
-    <Screen>
+    <Screen refreshing={refreshing} onRefresh={refresh}>
       <ThemedText type="heading">Mais</ThemedText>
       <ThemedCard>
         <ThemedText type="heading" themeColor="textOnBackground2">

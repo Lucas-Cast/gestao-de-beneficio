@@ -364,9 +364,9 @@ services.
 - Shared UI components are presentational: receive values, typed rows, children,
   loading state, and callbacks. Do not fetch data, depend on feature contracts,
   or embed business-specific filters, validation, or pagination rules.
-- On web list screens that provide `onRefresh`, pulling down from the top reloads
-  the whole page; do not add a duplicate refresh button. Native screens continue
-  using React Native's `RefreshControl` to refresh their data.
+- On any screen that provides `onRefresh`, pulling down from the top on web
+  reloads the whole page; do not add a duplicate refresh button. Native screens
+  use React Native's `RefreshControl` to refresh active query data.
 - Search debouncing and query logic belong to hooks; the generic search field
   handles input, clearing, and presentation only. Table columns and domain row
   renderers are supplied by the consuming feature.

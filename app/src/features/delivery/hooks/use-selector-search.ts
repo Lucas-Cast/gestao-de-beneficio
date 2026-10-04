@@ -11,6 +11,7 @@ import type { Page } from "../types/delivery.types";
 const PAGE_SIZE = 20;
 const SEARCH_DELAY_MS = 300;
 type SelectorKind = "beneficiary" | "basket";
+const SELECTOR_SEARCH_QUERY_KEY = ["selector-search"] as const;
 
 export function useSelectorSearch<T extends { id: string }>(
   kind: SelectorKind,
@@ -27,7 +28,7 @@ export function useSelectorSearch<T extends { id: string }>(
       : API_ROUTES.baskets.collection;
 
   const query = useInfiniteQuery<Page<T>, ApiRequestError>({
-    queryKey: ["selector-search", kind, search.params],
+    queryKey: [...SELECTOR_SEARCH_QUERY_KEY, kind, search.params],
     enabled: canSearch,
     initialPageParam: 1,
     queryFn: async ({ pageParam, signal }) => {

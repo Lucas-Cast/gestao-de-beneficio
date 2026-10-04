@@ -4,9 +4,13 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedButton } from "@/components/ui/themed-button";
 import { ThemedCard } from "@/components/ui/themed-card";
 import { ThemedEmptyState } from "@/components/ui/themed-empty-state";
+import { useRefreshQueries } from "@/hooks/use-refresh-queries";
+
 export default function DeliveriesScreen() {
+  const { refreshing, refresh } = useRefreshQueries();
+
   return (
-    <Screen>
+    <Screen refreshing={refreshing} onRefresh={refresh}>
       <ThemedText type="heading">Entregas</ThemedText>
       <ThemedButton
         label="Registrar entrega"

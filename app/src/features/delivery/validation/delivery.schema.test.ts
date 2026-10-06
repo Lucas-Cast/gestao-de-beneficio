@@ -13,9 +13,13 @@ describe("delivery rules", () => {
   test.each(["0", "-1", "1.2", "2147483648", "abc", ""])(
     "rejects quantity %s",
     (quantity) => {
-      expect(deliverySchema.safeParse({ ...valid, quantity }).success).toBe(
-        false,
-      );
+      const result = deliverySchema.safeParse({ ...valid, quantity });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe(
+          "Informe uma quantidade inteira maior que zero.",
+        );
+      }
     },
   );
   test.each(["1", "2", "2147483647"])("accepts quantity %s", (quantity) => {

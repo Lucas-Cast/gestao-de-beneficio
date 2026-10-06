@@ -14,7 +14,14 @@ export default function BottomNavigation() {
         tabBarInactiveTintColor: colors.textMutedOnBackground2,
         tabBarHideOnKeyboard: true,
         tabBarLabel: ({ color, children }) => (
-          <ThemedText type="small" style={{ color }}>
+          <ThemedText
+            type="tab"
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+            className="text-center"
+            style={{ color }}
+          >
             {children}
           </ThemedText>
         ),
@@ -40,6 +47,7 @@ export default function BottomNavigation() {
             title: "Beneficiários",
             icon: "account-group-outline",
           },
+          { name: "supplies", title: "Mantimentos", icon: "basket-outline" },
           { name: "more", title: "Mais", icon: "dots-horizontal" },
         ] as const
       ).map((tab) => (

@@ -8,7 +8,7 @@ export const deliverySchema = z.object({
     .refine(
       (value) =>
         /^[1-9]\d*$/.test(value) && Number(value) <= MAX_BASKET_QUANTITY,
-      "Informe um número inteiro positivo.",
+      "Informe uma quantidade inteira maior que zero.",
     ),
   observation: z
     .string()

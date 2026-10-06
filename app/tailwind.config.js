@@ -28,6 +28,7 @@ module.exports = {
         body: ["16px", { lineHeight: "24px", fontWeight: "500" }],
         "body-sm": ["14px", { lineHeight: "20px", fontWeight: "500" }],
         "body-sm-bold": ["14px", { lineHeight: "20px", fontWeight: "700" }],
+        "tab-label": ["10px", { lineHeight: "14px", fontWeight: "600" }],
         title: ["48px", { lineHeight: "52px", fontWeight: "600" }],
         subtitle: ["32px", { lineHeight: "44px", fontWeight: "600" }],
         heading: ["24px", { lineHeight: "32px", fontWeight: "700" }],

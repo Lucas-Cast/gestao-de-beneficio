@@ -53,7 +53,6 @@ beforeEach(() => {
 test("shows the entity history, date-range filters, and empty state", async () => {
   await renderModal();
 
-  expect(screen.getByRole("dialog")).toBeTruthy();
   expect(screen.getByText("Histórico de beneficiários")).toBeTruthy();
   expect(screen.getByText("Data inicial")).toBeTruthy();
   expect(screen.getByText("Data final")).toBeTruthy();

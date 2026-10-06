@@ -8,6 +8,11 @@ export const API_ROUTES = {
   },
   baskets: { collection: "/baskets" },
   basketDeliveries: { collection: "/basket-deliveries" },
+  supplies: {
+    collection: "/supplies",
+    byId: (id: string) => `/supplies/${id}`,
+  },
+  stockMovements: { collection: "/stock-movements" },
   auth: {
     login: "/users/login",
     register: "/users",

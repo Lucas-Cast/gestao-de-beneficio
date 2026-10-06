@@ -54,6 +54,8 @@ function RootLayoutContent() {
                 <Stack.Screen name="beneficiaries/new" />
                 <Stack.Screen name="beneficiaries/deleted" />
                 <Stack.Screen name="beneficiaries/[id]/edit" />
+                <Stack.Screen name="supplies/new" />
+                <Stack.Screen name="supplies/[id]/edit" />
               </Stack>
               <AnimatedSplashOverlay />
               <AppToastHost />

@@ -12,7 +12,8 @@ export type ThemedTextType =
   | "metric"
   | "link"
   | "linkPrimary"
-  | "code";
+  | "code"
+  | "tab";
 
 export type ThemedTextProps = TextProps & {
   className?: string;
@@ -31,6 +32,7 @@ const textTypeClasses: Record<ThemedTextType, string> = {
   link: "text-link",
   linkPrimary: "text-link text-foreground",
   code: "text-code font-mono",
+  tab: "text-tab-label sm:text-body-sm",
 };
 
 const textColorClasses: Partial<Record<ThemeColor, string>> = {

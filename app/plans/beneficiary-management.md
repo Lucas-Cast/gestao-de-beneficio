@@ -20,6 +20,8 @@ The generated design reference is illustrative; centralized theme tokens, respon
 
 Use the shared `CrudScreenLayout` under `src/components/ui/` for beneficiary management, then reuse it in other CRUD features.
 
+- The future supply-management CRUD screen must use this same `CrudScreenLayout`; do not create a separate page shell for Mantimentos.
+
 - Its interface is compositional: `title`, optional `description`, optional `primaryAction` (`label`, `onPress`, and optional loading/disabled state), optional `toolbar`, required content, and optional `footer`.
 - It provides consistent responsive page spacing, heading/action alignment, and content surface styling using existing `Screen`, `ThemedCard`, and semantic theme tokens.
 - It does not own API calls, query state, validation, form fields, tables/cards, deletion dialogs, pagination policy, or domain-specific copy. Features compose `SearchField`, `ThemedTable`, and their own mobile rows and forms within its slots.

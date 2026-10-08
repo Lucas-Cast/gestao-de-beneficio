@@ -29,4 +29,17 @@ describe('BasketDeliveryDomain', () => {
       BasketDeliveryDomain.consumption([{ supplyId: 'a', quantity: 0 }], 1),
     ).toThrow(new DomainError('INVALID_QUANTITY'));
   });
+
+  it('calculates today and month boundaries in the requested timezone', () => {
+    const periods = BasketDeliveryDomain.statisticsPeriods(
+      new Date('2026-10-08T15:00:00.000Z'),
+      'America/Sao_Paulo',
+    );
+
+    expect(periods.todayStart.toISOString()).toBe('2026-10-08T03:00:00.000Z');
+    expect(periods.tomorrowStart.toISOString()).toBe(
+      '2026-10-09T03:00:00.000Z',
+    );
+    expect(periods.monthStart.toISOString()).toBe('2026-10-01T03:00:00.000Z');
+  });
 });

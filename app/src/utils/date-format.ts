@@ -5,3 +5,27 @@ export function formatDateForDisplay(value: string, invalidFallback = value) {
   if (!Number.isFinite(date.getTime())) return invalidFallback;
   return new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(date);
 }
+
+export function formatDateTimeForDisplay(
+  value: string,
+  invalidFallback = "Data indisponível",
+) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return invalidFallback;
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(date);
+}
+
+export function formatTimeForDisplay(
+  value: string,
+  invalidFallback = "Horário indisponível",
+) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return invalidFallback;
+  return new Intl.DateTimeFormat("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}

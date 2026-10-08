@@ -13,7 +13,7 @@ import { UserService } from '../../user/service/user.service';
 import { SupplyDomain } from '../../supply/domain/supply.domain';
 import { UserDomain } from '../../user/domain/user.domain';
 
-type StockMovementWithRelations = Prisma.StockMovementGetPayload<{
+export type StockMovementWithRelations = Prisma.StockMovementGetPayload<{
   include: { supply: true; performedBy: true };
 }>;
 
@@ -92,7 +92,7 @@ export class StockMovementService {
     });
   }
 
-  private toResponse(movement: StockMovementWithRelations) {
+  toResponse(movement: StockMovementWithRelations) {
     const { supplyId: _supplyId, performedById: _performedById, ...fields } =
       StockMovementDomain.fromPrisma(movement);
     return {

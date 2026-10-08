@@ -15,6 +15,60 @@ interface DeliveryRecord {
   updatedAt: Date;
 }
 
+type CalendarDate = { year: number; month: number; day: number };
+
+function getCalendarDate(date: Date, timeZone: string): CalendarDate {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const value = (type: string) => {
+    const part = parts.find((item) => item.type === type)?.value;
+    if (!part) throw new Error(`Missing ${type} date part`);
+    return Number(part);
+  };
+  return { year: value('year'), month: value('month'), day: value('day') };
+}
+
+function getStartOfDay(date: CalendarDate, timeZone: string): Date {
+  const localMidnightAsUtc = Date.UTC(date.year, date.month - 1, date.day);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  });
+  let timestamp = localMidnightAsUtc;
+
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const parts = formatter.formatToParts(new Date(timestamp));
+    const value = (type: string) => {
+      const part = parts.find((item) => item.type === type)?.value;
+      if (!part) throw new Error(`Missing ${type} date part`);
+      return Number(part);
+    };
+    const representedAsUtc = Date.UTC(
+      value('year'),
+      value('month') - 1,
+      value('day'),
+      value('hour'),
+      value('minute'),
+      value('second'),
+    );
+    const adjusted = localMidnightAsUtc - (representedAsUtc - timestamp);
+    if (adjusted === timestamp) return new Date(timestamp);
+    timestamp = adjusted;
+  }
+
+  return new Date(timestamp);
+}
+
 export class BasketDeliveryDomain {
   readonly id: string;
   readonly basketId: string;
@@ -48,6 +102,25 @@ export class BasketDeliveryDomain {
         quantity: multiplyStockQuantity(item.quantity, count),
       }))
       .sort((a, b) => a.supplyId.localeCompare(b.supplyId));
+  }
+
+  static statisticsPeriods(now: Date, timeZone: string) {
+    const today = getCalendarDate(now, timeZone);
+    const tomorrowDate = new Date(
+      Date.UTC(today.year, today.month - 1, today.day + 1),
+    );
+    const tomorrow = {
+      year: tomorrowDate.getUTCFullYear(),
+      month: tomorrowDate.getUTCMonth() + 1,
+      day: tomorrowDate.getUTCDate(),
+    };
+
+    return {
+      todayStart: getStartOfDay(today, timeZone),
+      tomorrowStart: getStartOfDay(tomorrow, timeZone),
+      monthStart: getStartOfDay({ ...today, day: 1 }, timeZone),
+      now,
+    };
   }
 
   static fromPrisma(record: DeliveryRecord) {

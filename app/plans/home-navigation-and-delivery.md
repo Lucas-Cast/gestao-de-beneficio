@@ -2,11 +2,11 @@
 
 ## Summary
 
-Status: implemented on 2026-10-03. The visual references remain illustrative; the implementation and verification notes below describe the delivered frontend.
+Status: implemented on 2026-10-03; live delivery history and home statistics connected on 2026-10-08. The visual references remain illustrative; the implementation and verification notes below describe the delivered frontend.
 
-Build an institution-wide home and bottom navigation, plus a working delivery registration flow using existing API endpoints.
+Build an institution-wide home and bottom navigation, plus a working delivery registration flow and paginated delivery history.
 
-Home indicators and recent deliveries remain mocked and explicitly labeled as demonstration data. No backend changes are included.
+Home indicators are calculated from saved delivery records, and recent deliveries use the paginated delivery-history endpoint. The visual references and their example values remain illustrative only.
 
 ## Visual references
 
@@ -33,10 +33,10 @@ These references were generated with the built-in image generation tool. No addi
 - Replace the Expo starter screens with four tabs: **Início**, **Entregas**, **Beneficiários**, and **Mais**.
 - Keep navigation at the bottom on phones, tablets, and web. On desktop, use a centered dock.
 - Use Expo Router's standard `Tabs` across platforms and compatible `@expo/vector-icons` icons. Preserve the existing authentication guard.
-- **Início:** authenticated user's first name, current date, prominent “Registrar entrega” action, three indicator cards, and three recent demonstration deliveries. The institutional scope is implicit; do not display a scope chip.
-- Indicators: **Cestas entregues hoje**, **Beneficiários atendidos hoje**, and **Cestas entregues no mês**. Initial mock values: 12, 10, and 148.
-- Display “Dados demonstrativos” above the indicators and “Demonstração” beside recent deliveries. Demonstration entries are not clickable.
-- **Entregas:** functional “Registrar entrega” action and “Histórico de entregas ainda não disponível.”
+- **Início:** authenticated user's first name, current date, prominent “Registrar entrega” action, three indicator cards, and the three most recent real deliveries. The institutional scope is implicit; do not display a scope chip.
+- Indicators: **Cestas entregues hoje** (sum of delivery quantities during the current local calendar day), **Beneficiários atendidos hoje** (distinct beneficiaries with a delivery during that day), and **Cestas entregues no mês** (sum of delivery quantities from the start of the current local month through now). The API receives the device's IANA timezone to define these periods.
+- Read indicators from `GET /basket-deliveries/stats`; load the latest three rows from `GET /basket-deliveries?page=1&pageSize=3`. Render an em dash until indicator values arrive, and do not label live data as demonstration.
+- **Entregas:** functional “Registrar entrega” action and a searchable, paginated history showing each beneficiary, basket, operator, observation, timestamp, and the actual stock movements associated with the delivery.
 - **Beneficiários:** implement the searchable management experience specified in [its feature plan](./beneficiary-management.md).
 - **Mais:** logged-in user's name and email, existing logout action, and disabled “Cestas” and “Estoque” entries marked “Em breve”.
 - Registration opens at `/deliveries/new`, outside the tab shell, with a back action.
@@ -58,13 +58,12 @@ Use one form followed by a review dialog: a bottom sheet on phones and a centere
 - Close the review dialog when confirmation starts and lock the form while pending. The root toast host remains visible during the request and subsequent navigation. Show normalized Portuguese errors through the centralized toast service and preserve inputs on failure. Stock availability remains authoritative on the backend.
 - After a successful response, emit “Entrega registrada com sucesso.” through the API hook's configured success toast. Display a neutral “Resumo da entrega” view with the confirmed delivery details and actions “Registrar outra entrega” and “Voltar ao início”; do not duplicate the success message in a banner or heading.
 - Do not automatically retry POST requests. For a connection failure with an uncertain outcome, explain that registration could not be confirmed and ask the operator to verify before retrying.
-- Real registrations do not alter demonstration indicators or demonstration history.
+- Successful registrations update the live home indicators and recent-delivery list when the Home screen is refreshed or focused again.
 
 ## Architecture and visual specification
 
 - Keep route files thin and organize screens, hooks, validation, types, and fixtures by feature: home, delivery registration, and account.
-- Keep mock data inside the home feature. Expose it through a typed home-overview hook so a future API integration can replace the data source without rewriting the screen.
-- Extend `API_ROUTES` with the existing beneficiary, basket, and basket-delivery endpoints. Compose feature hooks from the shared Axios request hooks; do not introduce caching.
+- Keep Home API query composition in the typed home-overview hook. The basket-delivery module owns the statistics endpoint and aggregation; the existing paginated history endpoint supplies recent rows. Registration continues to use `POST /basket-deliveries`.
 - Follow the shared UI inventory and feature boundaries below. Shared components are presentational and must not fetch data or know beneficiary, basket, or delivery contracts.
 - Follow centralized NativeWind color and typography tokens. Retain navy backgrounds, white light-mode surfaces, dark navy dark-mode surfaces, and orange primary actions.
 - Ensure button text and active navigation labels meet contrast requirements; use a centralized `textOnForeground` token for orange buttons. The written specification takes precedence over approximate image colors.
@@ -120,7 +119,7 @@ Do not create a generic selector, KPI widget, quantity stepper, or summary abstr
 - Add frontend tests using Expo-compatible Jest and React Native Testing Library, mocking API requests rather than modifying the backend.
 - Test name/CPF searches, pagination, stale-response handling, quantity limits, observation limits, missing selections, and preservation of values when returning from review.
 - Verify that review sends no request, confirmation sends exactly one correct POST, pending submission blocks duplicates, failures preserve the form, and success appears only after a successful API response.
-- Verify that home demonstration data remains labeled and unchanged after a real registration.
+- Verify home statistics are loaded from the API, use the device timezone, and reflect actual basket quantities and distinct beneficiaries; verify recent rows come from the paginated delivery endpoint.
 - Test navigation, authenticated access, and existing logout behavior.
 - Verify the scope chip is absent in the home and its visual reference.
 - Test one error toast per current failed request, configured mutation success messages, no success notification for ordinary GETs, and no notifications for cancellation or superseded requests. Verify Portuguese fallbacks and delivery-specific uncertain-outcome feedback.
@@ -129,11 +128,11 @@ Do not create a generic selector, KPI widget, quantity stepper, or summary abstr
 - Test shared table row rendering/selection and reusable modal/search behavior independently of feature API contracts.
 - Run TypeScript and lint checks; validate light/dark layouts at narrow and wide phone widths, tablet portrait/landscape, and desktop web.
 - Check the versioned Expo 57 documentation before implementing navigation or adding Expo dependencies.
-- Acceptance: an authenticated operator can select an existing beneficiary and basket, review a delivery, register it through the existing API, and receive a clear confirmation without any backend changes.
+- Acceptance: an authenticated operator can review and register a delivery, receive confirmation, and find the saved delivery in the searchable, paginated history with its related people and recorded stock movements.
 
 ## Implementation and verification notes
 
-- Route adapters delegate to home, delivery, beneficiaries, and account features. Beneficiary management uses the shared CRUD page layout and existing endpoints; registration uses existing API contracts. No backend files were changed.
+- Route adapters delegate to home, delivery, beneficiaries, and account features. Beneficiary management uses the shared CRUD page layout; delivery registration uses `POST /basket-deliveries`, while the history uses paginated `GET /basket-deliveries`.
 - Keep the root navigator and root toast host mounted. Apply the existing authentication guard at the authenticated tab layout, authentication layout, and standalone delivery route. Unmounting the root navigator during an authentication redirect resets notification state and loses logout feedback.
 - GET requests expose cancellation. Selector searches abort and invalidate pending requests when closed or superseded, including the debounce interval, and keep pagination/results scoped to the current search.
 - The shared user contract lives in `src/types/user.ts`, so global context does not depend on authentication feature types.

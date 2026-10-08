@@ -8,10 +8,12 @@ import { useRefreshQueries } from "@/hooks/use-refresh-queries";
 import { useHomeOverview } from "../hooks/use-home-overview";
 import { HomeIndicators } from "../components/home-indicators";
 import { RecentDeliveries } from "../components/recent-deliveries";
+import { useRefreshHomeOnFocus } from "../hooks/use-refresh-home-on-focus";
 export default function HomeScreen() {
   const { user } = useUser();
   const { refreshing, refresh } = useRefreshQueries();
   const overview = useHomeOverview();
+  useRefreshHomeOnFocus();
   return (
     <Screen refreshing={refreshing} onRefresh={refresh}>
       <View className="gap-2">
@@ -31,7 +33,10 @@ export default function HomeScreen() {
         onPress={() => router.push("/deliveries/new")}
       />
       <HomeIndicators indicators={overview.indicators} />
-      <RecentDeliveries rows={overview.recent} />
+      <RecentDeliveries
+        rows={overview.recent}
+        loading={overview.recentLoading}
+      />
     </Screen>
   );
 }

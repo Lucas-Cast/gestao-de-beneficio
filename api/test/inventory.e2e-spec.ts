@@ -392,6 +392,101 @@ describe('Inventory API (PostgreSQL)', () => {
       .expect(404);
   });
 
+  it('lists paginated delivery history with related people and actual stock movements', async () => {
+    const definition = await basket();
+    const created = await post('/basket-deliveries', {
+      basketId: definition.basketId,
+      beneficiaryId: definition.beneficiaryId,
+      quantity: 2,
+      observation: 'Entrega prioritária.',
+    }).expect(201);
+
+    const result = await get('/basket-deliveries')
+      .query({ search: 'Beneficiário', page: 1, pageSize: 1 })
+      .expect(200);
+    expect(result.body).toMatchObject({ total: 1, page: 1, pageSize: 1 });
+    expect(result.body.data[0]).toMatchObject({
+      id: created.body.id,
+      quantity: 2,
+      observation: 'Entrega prioritária.',
+      beneficiary: { id: definition.beneficiaryId, name: 'Beneficiário' },
+      basket: {
+        id: definition.basketId,
+        name: 'Cesta',
+        supplies: expect.arrayContaining([
+          expect.objectContaining({
+            supply: expect.objectContaining({ id: definition.supplies[0].id }),
+          }),
+        ]),
+      },
+      deliveredBy: { id: actorId, name: 'Operador' },
+      stockMovements: [
+        { type: 'OUT', quantity: 4, supply: { id: definition.supplies[0].id } },
+        { type: 'OUT', quantity: 2, supply: { id: definition.supplies[1].id } },
+      ],
+    });
+    expect(result.body.data[0]).not.toHaveProperty('beneficiaryId');
+    expect(result.body.data[0]).not.toHaveProperty('basketId');
+    expect(result.body.data[0]).not.toHaveProperty('deliveredById');
+
+    const emptyPage = await get('/basket-deliveries')
+      .query({ page: 2, pageSize: 1 })
+      .expect(200);
+    expect(emptyPage.body).toMatchObject({ total: 1, page: 2, pageSize: 1 });
+    expect(emptyPage.body.data).toHaveLength(0);
+  });
+
+  it('returns timezone-aware home statistics, unique beneficiaries and current-month totals', async () => {
+    const first = await basket([100], [1]);
+    const second = await basket([100], [1]);
+    await post('/basket-deliveries', {
+      basketId: first.basketId,
+      beneficiaryId: first.beneficiaryId,
+      quantity: 2,
+    }).expect(201);
+    await post('/basket-deliveries', {
+      basketId: first.basketId,
+      beneficiaryId: first.beneficiaryId,
+      quantity: 3,
+    }).expect(201);
+    await post('/basket-deliveries', {
+      basketId: second.basketId,
+      beneficiaryId: second.beneficiaryId,
+      quantity: 4,
+    }).expect(201);
+
+    const previousMonth = await post('/basket-deliveries', {
+      basketId: first.basketId,
+      beneficiaryId: first.beneficiaryId,
+      quantity: 7,
+    }).expect(201);
+    await db().basketDelivery.update({
+      where: { id: previousMonth.body.id },
+      data: { createdAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000) },
+    });
+
+    const deleted = await post('/basket-deliveries', {
+      basketId: first.basketId,
+      beneficiaryId: first.beneficiaryId,
+      quantity: 11,
+    }).expect(201);
+    await db().basketDelivery.update({
+      where: { id: deleted.body.id },
+      data: { deletedAt: new Date() },
+    });
+
+    const result = await get('/basket-deliveries/stats')
+      .query({ timeZone: 'America/Sao_Paulo' })
+      .expect(200);
+
+    expect(result.body).toEqual({
+      basketsDeliveredToday: 9,
+      beneficiariesAttendedToday: 2,
+      basketsDeliveredThisMonth: 9,
+    });
+    await get('/basket-deliveries/stats?timeZone=not-a-time-zone').expect(400);
+  });
+
   it('rolls back the entire delivery when its second supply is insufficient', async () => {
     const definition = await basket([10, 0]);
     await post('/basket-deliveries', {

@@ -34,3 +34,40 @@ export type Delivery = {
   observation: string | null;
   createdAt: string;
 };
+export type DeliveryHistoryEntry = {
+  id: string;
+  quantity: number;
+  observation: string | null;
+  createdAt: string;
+  beneficiary: {
+    id: string;
+    name: string;
+    cpf: string;
+  };
+  basket: {
+    id: string;
+    name: string;
+    description: string | null;
+    deletedAt: string | null;
+  };
+  deliveredBy: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  stockMovements: {
+    id: string;
+    type: "IN" | "OUT";
+    quantity: number;
+    reason: string | null;
+    supply: {
+      id: string;
+      name: string;
+      unit: string;
+    };
+    performedBy: {
+      id: string;
+      name: string;
+    };
+  }[];
+};

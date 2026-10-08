@@ -4,12 +4,17 @@ import { MIN_POSITIVE_INTEGER } from '../../../common/domain/integer-limits';
 import { withHttpErrors } from '../../../common/errors/to-http-exception';
 import { DatabaseService } from '../../database/database.service';
 import { StockMovementService } from '../../stock-movement/service/stock-movement.service';
+import { BeneficiaryDomain } from '../../beneficiary/domain/beneficiary.domain';
+import { BasketDomain } from '../../basket/domain/basket.domain';
+import { UserDomain } from '../../user/domain/user.domain';
 import { BasketDeliveryRepository } from '../basket-delivery.repository';
 import { BasketDeliveryDomain } from '../domain/basket-delivery.domain';
 import { CreateBasketDeliveryDto } from '../dto/create-basket-delivery.dto';
+import { ListBasketDeliveriesDto } from '../dto/list-basket-deliveries.dto';
 import { UserService } from '../../user/service/user.service';
 import { BeneficiaryService } from '../../beneficiary/service/beneficiary.service';
 import { BasketService } from '../../basket/service/basket.service';
+import { BasketDeliveryStatsQueryDto } from '../dto/basket-delivery-stats-query.dto';
 
 @Injectable()
 export class BasketDeliveryService {
@@ -21,6 +26,42 @@ export class BasketDeliveryService {
     private readonly beneficiaries: BeneficiaryService,
     private readonly baskets: BasketService,
   ) {}
+
+  getStats(query: BasketDeliveryStatsQueryDto) {
+    return withHttpErrors(() =>
+      this.repository.getStats(
+        BasketDeliveryDomain.statisticsPeriods(new Date(), query.timeZone),
+      ),
+    );
+  }
+
+  findAll(query: ListBasketDeliveriesDto) {
+    return withHttpErrors(async () => {
+      const { data, total } = await this.repository.findAll(query);
+      return {
+        data: data.map((record) => {
+          const {
+            basketId: _basketId,
+            beneficiaryId: _beneficiaryId,
+            deliveredById: _deliveredById,
+            ...delivery
+          } = BasketDeliveryDomain.fromPrisma(record);
+          return {
+            ...delivery,
+            beneficiary: BeneficiaryDomain.fromPrisma(record.beneficiary),
+            basket: BasketDomain.fromPrisma(record.basket),
+            deliveredBy: UserDomain.fromPrisma(record.deliveredBy),
+            stockMovements: record.stockMovements.map((movement) =>
+              this.movements.toResponse(movement),
+            ),
+          };
+        }),
+        total,
+        page: query.page,
+        pageSize: query.pageSize,
+      };
+    });
+  }
 
   create(dto: CreateBasketDeliveryDto, actorId: string) {
     return withHttpErrors(() =>

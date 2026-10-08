@@ -7,14 +7,14 @@ import {
 } from "@testing-library/react-native";
 import { createElement, type ReactNode } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { router } from "expo-router";
 
 import { api } from "@/services/api/client";
 
 import DeliveriesScreen from "./deliveries-screen";
 
-const mockPush = jest.fn();
 jest.mock("expo-router", () => ({
-  router: { push: mockPush },
+  router: { push: jest.fn() },
   useFocusEffect: (callback: () => void) => {
     const { useEffect } = jest.requireActual<typeof import("react")>("react");
     useEffect(callback, [callback]);
@@ -22,6 +22,7 @@ jest.mock("expo-router", () => ({
 }));
 jest.mock("@/services/api/client", () => ({ api: { get: jest.fn() } }));
 
+const mockPush = jest.mocked(router.push);
 const mockGet = jest.mocked(api.get);
 
 function makeDelivery(id: string, beneficiaryName: string, supplyName: string) {

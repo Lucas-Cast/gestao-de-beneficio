@@ -52,7 +52,7 @@ beforeEach(() => {
 });
 
 test("loads real home stats and the latest deliveries from the API", async () => {
-  const { result } = renderHook(() => useHomeOverview(), { wrapper });
+  const { result } = await renderHook(() => useHomeOverview(), { wrapper });
 
   await waitFor(() => expect(result.current.loading).toBe(false));
 

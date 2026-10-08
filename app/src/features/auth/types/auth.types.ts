@@ -4,6 +4,7 @@ export type AuthResponse = {
   token: string;
   name: string;
   email: string;
+  role: "ADMIN" | "COMMON";
 };
 
 export type RegisterResponse = {

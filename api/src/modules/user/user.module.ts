@@ -7,6 +7,7 @@ import { JwtAuthGuard } from './guard/jwt-auth.guard';
 import { UserService } from './service/user.service';
 import { UserController } from './user.controller';
 import { UserRepository } from './user.repository';
+import { RolesGuard } from './guard/roles.guard';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UserRepository } from './user.repository';
     HashService,
     JwtStrategy,
     JwtAuthGuard,
+    RolesGuard,
     UserService,
   ],
   exports: [JwtAuthGuard, UserService],

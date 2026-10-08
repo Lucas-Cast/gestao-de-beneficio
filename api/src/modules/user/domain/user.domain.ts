@@ -3,7 +3,14 @@ import type { User as PrismaUser } from '../../../generated/prisma/client';
 
 type UserProps = Pick<
   PrismaUser,
-  'id' | 'name' | 'email' | 'deletedAt' | 'isActive' | 'createdAt' | 'updatedAt'
+  | 'id'
+  | 'name'
+  | 'email'
+  | 'deletedAt'
+  | 'isActive'
+  | 'role'
+  | 'createdAt'
+  | 'updatedAt'
 >;
 
 export class UserDomain {
@@ -22,6 +29,9 @@ export class UserDomain {
   @ApiProperty({ example: false })
   readonly isActive: boolean;
 
+  @ApiProperty({ enum: ['ADMIN', 'COMMON'] })
+  readonly role: PrismaUser['role'];
+
   @ApiProperty()
   readonly createdAt: Date;
 
@@ -34,6 +44,7 @@ export class UserDomain {
     this.email = user.email;
     this.deletedAt = user.deletedAt;
     this.isActive = user.isActive;
+    this.role = user.role;
     this.createdAt = user.createdAt;
     this.updatedAt = user.updatedAt;
   }

@@ -28,5 +28,6 @@ export const API_ROUTES = {
   users: {
     collection: "/users",
     byId: (id: string) => `/users/${id}`,
+    status: (id: string) => `/users/${id}/status`,
   },
 } as const;

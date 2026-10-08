@@ -63,6 +63,7 @@ export default function BottomNavigation() {
           }}
         />
       ))}
+      <Tabs.Screen name="users" options={{ href: null }} />
     </Tabs>
   );
 }

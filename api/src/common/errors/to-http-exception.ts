@@ -35,13 +35,27 @@ const domainResponses: Record<
   },
   BASKET_HAS_DELETED_SUPPLY: {
     status: 409,
-    message: 'Esta cesta contém mantimentos excluídos e não pode ser restaurada.',
+    message:
+      'Esta cesta contém mantimentos excluídos e não pode ser restaurada.',
   },
   BENEFICIARY_NOT_FOUND: {
     status: 404,
     message: 'Beneficiário não encontrado ou excluído.',
   },
   INACTIVE_USER: { status: 401, message: 'Usuário não encontrado ou inativo.' },
+  USER_NOT_FOUND: { status: 404, message: 'Usuário não encontrado.' },
+  CANNOT_MANAGE_SELF: {
+    status: 409,
+    message: 'Você não pode desativar ou excluir sua própria conta.',
+  },
+  CANNOT_CHANGE_OWN_ROLE: {
+    status: 409,
+    message: 'Você não pode alterar sua própria função.',
+  },
+  LAST_ACTIVE_ADMIN: {
+    status: 409,
+    message: 'Não é possível remover o último administrador ativo.',
+  },
   INVALID_DATE_RANGE: {
     status: 400,
     message: 'A data inicial deve ser anterior ou igual à data final.',

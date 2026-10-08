@@ -8,9 +8,11 @@ jest.mock("@/services/api/session", () => ({
 beforeEach(() => {
   jest.clearAllMocks();
   jest.mocked(session.getToken).mockResolvedValue("token");
-  jest
-    .mocked(session.getUser)
-    .mockResolvedValue({ name: "Ana", email: "ana@exemplo.com" });
+  jest.mocked(session.getUser).mockResolvedValue({
+    name: "Ana",
+    email: "ana@exemplo.com",
+    role: "COMMON",
+  });
   jest.mocked(session.clear).mockResolvedValue();
 });
 test("restores persisted user and logout clears session and context with one toast", async () => {

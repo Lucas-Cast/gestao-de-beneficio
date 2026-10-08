@@ -1,16 +1,17 @@
-import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
+import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 
-const SESSION_TOKEN_KEY = 'gestao-beneficio.jwt';
-const SESSION_USER_KEY = 'gestao-beneficio.user';
+const SESSION_TOKEN_KEY = "gestao-beneficio.jwt";
+const SESSION_USER_KEY = "gestao-beneficio.user";
 
 export type StoredSessionUser = {
   name: string;
   email: string;
+  role: "ADMIN" | "COMMON";
 };
 
 function getWebStorage(): Storage | null {
-  if (Platform.OS !== 'web' || typeof window === 'undefined') {
+  if (Platform.OS !== "web" || typeof window === "undefined") {
     return null;
   }
 
@@ -53,14 +54,19 @@ export const session = {
       const parsed: unknown = JSON.parse(value);
 
       if (
-        typeof parsed === 'object' &&
+        typeof parsed === "object" &&
         parsed !== null &&
-        'name' in parsed &&
-        'email' in parsed &&
-        typeof parsed.name === 'string' &&
-        typeof parsed.email === 'string'
+        "name" in parsed &&
+        "email" in parsed &&
+        typeof parsed.name === "string" &&
+        typeof parsed.email === "string"
       ) {
-        return { name: parsed.name, email: parsed.email };
+        const role =
+          "role" in parsed &&
+          (parsed.role === "ADMIN" || parsed.role === "COMMON")
+            ? parsed.role
+            : "COMMON";
+        return { name: parsed.name, email: parsed.email, role };
       }
     } catch {
       return null;
@@ -70,7 +76,11 @@ export const session = {
   },
 
   async setUser(user: StoredSessionUser): Promise<void> {
-    const value = JSON.stringify({ name: user.name, email: user.email });
+    const value = JSON.stringify({
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
     const webStorage = getWebStorage();
 
     if (webStorage) {

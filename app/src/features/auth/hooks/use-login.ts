@@ -28,7 +28,11 @@ export function useLogin() {
         );
         throw error;
       }
-      setUser({ name: response.name, email: response.email });
+      setUser({
+        name: response.name,
+        email: response.email,
+        role: response.role,
+      });
       notifications.success("Você entrou na sua conta.");
       return response;
     },

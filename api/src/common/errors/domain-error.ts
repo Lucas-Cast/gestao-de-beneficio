@@ -10,6 +10,10 @@ export type DomainErrorCode =
   | 'BASKET_HAS_DELETED_SUPPLY'
   | 'BENEFICIARY_NOT_FOUND'
   | 'INACTIVE_USER'
+  | 'USER_NOT_FOUND'
+  | 'CANNOT_MANAGE_SELF'
+  | 'CANNOT_CHANGE_OWN_ROLE'
+  | 'LAST_ACTIVE_ADMIN'
   | 'INVALID_DATE_RANGE';
 
 export class DomainError extends Error {

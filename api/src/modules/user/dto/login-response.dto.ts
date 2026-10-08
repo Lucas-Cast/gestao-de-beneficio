@@ -9,4 +9,7 @@ export class LoginResponseDto {
 
   @ApiProperty({ example: 'usuario@exemplo.com' })
   email!: string;
+
+  @ApiProperty({ enum: ['ADMIN', 'COMMON'] })
+  role!: 'ADMIN' | 'COMMON';
 }

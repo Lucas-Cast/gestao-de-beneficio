@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { View } from "react-native";
+import { useRouter } from "expo-router";
 
 import { Screen } from "@/components/screen";
 import { ThemedText } from "@/components/themed-text";
@@ -10,6 +11,7 @@ import { useUser } from "@/context/user-context";
 import { useRefreshQueries } from "@/hooks/use-refresh-queries";
 
 export default function AccountScreen() {
+  const router = useRouter();
   const { user, logout } = useUser();
   const { refreshing, refresh } = useRefreshQueries();
   const { activeScheme, preference, ready, setPreference } =
@@ -56,18 +58,15 @@ export default function AccountScreen() {
           ) : null}
         </View>
       </ThemedCard>
-      <ThemedCard>
-        <View className="gap-3">
-          {["Estoque"].map((label) => (
-            <ThemedButton
-              key={label}
-              label={label + " · Em breve"}
-              disabled
-              variant="secondary"
-            />
-          ))}
-        </View>
-      </ThemedCard>
+      {user?.role === "ADMIN" ? (
+        <ThemedCard>
+          <ThemedButton
+            label="Gerenciar usuários"
+            variant="secondary"
+            onPress={() => router.push("/users")}
+          />
+        </ThemedCard>
+      ) : null}
       <ThemedButton
         label="Sair da conta"
         loading={pending}

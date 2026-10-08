@@ -4,12 +4,18 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import type { Prisma, UserRole } from '../../../generated/prisma/client';
+import { Prisma } from '../../../generated/prisma/client';
+import type { UserRole } from '../../../generated/prisma/client';
+import { DomainError } from '../../../common/errors/domain-error';
+import { withHttpErrors } from '../../../common/errors/to-http-exception';
+import { DatabaseService } from '../../database/database.service';
 import { UserDomain } from '../domain/user.domain';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { LoginUserDto } from '../dto/login-user.dto';
 import { LoginResponseDto } from '../dto/login-response.dto';
+import { ListUsersDto } from '../dto/list-users.dto';
+import { UpdateUserRoleDto } from '../dto/update-user-role.dto';
 import { UserRepository } from '../user.repository';
 import { HashService } from './hash.service';
 import { JwtService } from '@nestjs/jwt';
@@ -17,6 +23,7 @@ import { JwtService } from '@nestjs/jwt';
 @Injectable()
 export class UserService {
   constructor(
+    private readonly database: DatabaseService,
     private readonly userRepository: UserRepository,
     private readonly hashService: HashService,
     private readonly jwtService: JwtService,
@@ -54,9 +61,14 @@ export class UserService {
     return this.createAuthResponse(user);
   }
 
-  async findAll(): Promise<UserDomain[]> {
-    const users = await this.userRepository.findAll();
-    return UserDomain.fromPrismaMany(users);
+  async findAll(query: ListUsersDto) {
+    const { data, total } = await this.userRepository.findAll(query);
+    return {
+      data: UserDomain.fromPrismaMany(data),
+      total,
+      page: query.page,
+      pageSize: query.pageSize,
+    };
   }
 
   async isActive(tx: Prisma.TransactionClient, id: string): Promise<boolean> {
@@ -99,9 +111,85 @@ export class UserService {
     return UserDomain.fromPrisma(user);
   }
 
-  async remove(id: string): Promise<void> {
-    await this.findActiveUser(id);
-    await this.userRepository.softDelete(id);
+  setActive(id: string, isActive: boolean, actorId: string) {
+    return withHttpErrors(() =>
+      this.database.$transaction(
+        async (tx) => {
+          const user = await this.userRepository.findById(id, tx);
+          if (!user) throw new DomainError('USER_NOT_FOUND');
+          if (id === actorId && !isActive)
+            throw new DomainError('CANNOT_MANAGE_SELF');
+
+          if (
+            !isActive &&
+            user.isActive &&
+            user.role === 'ADMIN' &&
+            (await this.userRepository.countActiveAdmins(tx)) <= 1
+          ) {
+            throw new DomainError('LAST_ACTIVE_ADMIN');
+          }
+
+          return UserDomain.fromPrisma(
+            await this.userRepository.setActive(tx, id, isActive),
+          );
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      ),
+    );
+  }
+
+  setRole(
+    id: string,
+    role: UpdateUserRoleDto['role'],
+    actorId: string,
+  ): Promise<UserDomain> {
+    return withHttpErrors(() =>
+      this.database.$transaction(
+        async (tx) => {
+          const user = await this.userRepository.findById(id, tx);
+          if (!user) throw new DomainError('USER_NOT_FOUND');
+          if (user.role === role) return UserDomain.fromPrisma(user);
+          if (id === actorId) throw new DomainError('CANNOT_CHANGE_OWN_ROLE');
+
+          if (
+            user.isActive &&
+            user.role === 'ADMIN' &&
+            role === 'COMMON' &&
+            (await this.userRepository.countActiveAdmins(tx)) <= 1
+          ) {
+            throw new DomainError('LAST_ACTIVE_ADMIN');
+          }
+
+          return UserDomain.fromPrisma(
+            await this.userRepository.setRole(tx, id, role),
+          );
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      ),
+    );
+  }
+
+  remove(id: string, actorId: string): Promise<void> {
+    return withHttpErrors(() =>
+      this.database.$transaction(
+        async (tx) => {
+          const user = await this.userRepository.findById(id, tx);
+          if (!user) throw new DomainError('USER_NOT_FOUND');
+          if (id === actorId) throw new DomainError('CANNOT_MANAGE_SELF');
+
+          if (
+            user.isActive &&
+            user.role === 'ADMIN' &&
+            (await this.userRepository.countActiveAdmins(tx)) <= 1
+          ) {
+            throw new DomainError('LAST_ACTIVE_ADMIN');
+          }
+
+          await this.userRepository.softDelete(tx, id);
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      ),
+    );
   }
 
   private createAuthResponse(user: {
@@ -119,6 +207,7 @@ export class UserService {
       }),
       name: user.name,
       email: user.email,
+      role: user.role,
     };
   }
 

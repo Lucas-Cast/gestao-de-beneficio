@@ -1,13 +1,8 @@
-import {
-  ConflictException,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import type {
-  Prisma,
-  User as PrismaUser,
-} from '../../../generated/prisma/client';
+import { Prisma } from '../../../generated/prisma/client';
+import type { User as PrismaUser } from '../../../generated/prisma/client';
+import { DatabaseService } from '../../database/database.service';
 import { UserRepository } from '../user.repository';
 import { HashService } from './hash.service';
 import { JwtService } from '@nestjs/jwt';
@@ -38,21 +33,50 @@ describe('UserService', () => {
   const jwtService = {
     sign: jest.fn<string, [PrismaUser]>().mockReturnValue('jwt-token'),
   };
+  const transactionClient = {} as Prisma.TransactionClient;
+  const database = {
+    $transaction: jest.fn(
+      (operation: (tx: Prisma.TransactionClient) => Promise<unknown>) =>
+        operation(transactionClient),
+    ),
+  };
   const userRepository = {
     create: jest.fn<Promise<PrismaUser>, [Prisma.UserCreateInput]>(),
-    findAll: jest.fn<Promise<PrismaUser[]>, []>(),
+    findAll: jest.fn<
+      Promise<{ data: PrismaUser[]; total: number }>,
+      [import('../dto/list-users.dto').ListUsersDto]
+    >(),
     findByEmail: jest.fn<Promise<PrismaUser | null>, [string]>(),
-    findById: jest.fn<Promise<PrismaUser | null>, [string]>(),
+    findById: jest.fn<
+      Promise<PrismaUser | null>,
+      [string, Prisma.TransactionClient?]
+    >(),
     update: jest.fn<Promise<PrismaUser>, [string, Prisma.UserUpdateInput]>(),
-    softDelete: jest.fn<Promise<PrismaUser>, [string]>(),
+    softDelete: jest.fn<
+      Promise<PrismaUser>,
+      [Prisma.TransactionClient, string]
+    >(),
+    setActive: jest.fn<
+      Promise<PrismaUser>,
+      [Prisma.TransactionClient, string, boolean]
+    >(),
+    setRole: jest.fn<
+      Promise<PrismaUser>,
+      [Prisma.TransactionClient, string, PrismaUser['role']]
+    >(),
+    countActiveAdmins: jest.fn<Promise<number>, [Prisma.TransactionClient]>(),
   };
 
   beforeEach(async () => {
     jest.resetAllMocks();
+    database.$transaction.mockImplementation((operation) =>
+      operation(transactionClient),
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserService,
+        { provide: DatabaseService, useValue: database },
         {
           provide: UserRepository,
           useValue: userRepository,
@@ -100,6 +124,7 @@ describe('UserService', () => {
       email: prismaUser.email,
       deletedAt: null,
       isActive: false,
+      role: 'COMMON',
       createdAt: prismaUser.createdAt,
       updatedAt: prismaUser.updatedAt,
     });
@@ -133,6 +158,7 @@ describe('UserService', () => {
         token: 'jwt-token',
         name: prismaUser.name,
         email: prismaUser.email,
+        role,
       });
       expect(jwtService.sign).toHaveBeenCalledWith({
         sub: prismaUser.id,
@@ -165,17 +191,107 @@ describe('UserService', () => {
       deletedAt: new Date('2026-09-13T12:00:00.000Z'),
     });
 
-    await service.remove(prismaUser.id);
+    await service.remove('another-user-id', 'admin-id');
 
-    expect(userRepository.softDelete).toHaveBeenCalledWith(prismaUser.id);
+    expect(userRepository.softDelete).toHaveBeenCalledWith(
+      expect.anything(),
+      'another-user-id',
+    );
   });
 
   it('returns not found when attempting to remove a deleted or unknown user', async () => {
     userRepository.findById.mockResolvedValue(null);
 
-    await expect(service.remove(prismaUser.id)).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
+    await expect(
+      service.remove(prismaUser.id, 'admin-id'),
+    ).rejects.toMatchObject({ status: 404 });
     expect(userRepository.softDelete).not.toHaveBeenCalled();
+  });
+
+  it('activates a user and runs the status change in a serializable transaction', async () => {
+    userRepository.findById.mockResolvedValue({
+      ...prismaUser,
+      isActive: false,
+    });
+    userRepository.setActive.mockResolvedValue({
+      ...prismaUser,
+      isActive: true,
+    });
+
+    await expect(
+      service.setActive(prismaUser.id, true, 'admin-id'),
+    ).resolves.toMatchObject({ isActive: true, role: 'COMMON' });
+    expect(userRepository.setActive).toHaveBeenCalledWith(
+      expect.anything(),
+      prismaUser.id,
+      true,
+    );
+    expect(database.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    });
+  });
+
+  it('does not allow an administrator to deactivate their own account', async () => {
+    userRepository.findById.mockResolvedValue({ ...prismaUser, role: 'ADMIN' });
+
+    await expect(
+      service.setActive(prismaUser.id, false, prismaUser.id),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(userRepository.setActive).not.toHaveBeenCalled();
+  });
+
+  it('does not allow removing the last active administrator', async () => {
+    userRepository.findById.mockResolvedValue({ ...prismaUser, role: 'ADMIN' });
+    userRepository.countActiveAdmins.mockResolvedValue(1);
+
+    await expect(
+      service.setActive('another-user-id', false, 'actor-id'),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(userRepository.setActive).not.toHaveBeenCalled();
+  });
+
+  it('changes a user role in a serializable transaction', async () => {
+    userRepository.findById.mockResolvedValue(prismaUser);
+    userRepository.setRole.mockResolvedValue({ ...prismaUser, role: 'ADMIN' });
+
+    await expect(
+      service.setRole(prismaUser.id, 'ADMIN', 'admin-id'),
+    ).resolves.toMatchObject({ role: 'ADMIN' });
+    expect(userRepository.setRole).toHaveBeenCalledWith(
+      expect.anything(),
+      prismaUser.id,
+      'ADMIN',
+    );
+    expect(database.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    });
+  });
+
+  it('does not allow changing the signed-in administrator role', async () => {
+    userRepository.findById.mockResolvedValue({ ...prismaUser, role: 'ADMIN' });
+
+    await expect(
+      service.setRole(prismaUser.id, 'COMMON', prismaUser.id),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(userRepository.setRole).not.toHaveBeenCalled();
+  });
+
+  it('does not allow demoting the last active administrator', async () => {
+    userRepository.findById.mockResolvedValue({ ...prismaUser, role: 'ADMIN' });
+    userRepository.countActiveAdmins.mockResolvedValue(1);
+
+    await expect(
+      service.setRole('another-user-id', 'COMMON', 'actor-id'),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(userRepository.setRole).not.toHaveBeenCalled();
+  });
+
+  it('does not write when the requested role is already assigned', async () => {
+    userRepository.findById.mockResolvedValue(prismaUser);
+
+    await expect(
+      service.setRole(prismaUser.id, 'COMMON', 'actor-id'),
+    ).resolves.toMatchObject({ role: 'COMMON' });
+    expect(userRepository.setRole).not.toHaveBeenCalled();
   });
 });

@@ -55,7 +55,6 @@ export function SupplyDetailsModal({
           </View>
         ) : details.data ? (
           <View className="gap-3 sm:flex-row sm:justify-end">
-            <ThemedButton label="Fechar" variant="secondary" onPress={close} className="sm:min-w-32" />
             <ThemedButton label="Movimentações" variant="secondary" onPress={() => onViewHistory(details.data!.id)} className="sm:min-w-40" />
             <ThemedButton label="Editar" variant="secondary" onPress={() => onEdit(details.data!.id)} className="sm:min-w-32" />
             <ThemedButton label="Excluir" variant="secondary" onPress={() => setConfirmingDelete(true)} className="border-danger sm:min-w-32" />

@@ -130,7 +130,11 @@ export default function DeletedBasketsScreen() {
 
       <ThemedModal
         visible={Boolean(selectedBasket)}
-        title="Restaurar cesta?"
+        title={
+          deletedSupplies.length > 0
+            ? "Cesta não pode ser restaurada"
+            : "Restaurar cesta?"
+        }
         onClose={() => {
           if (!restoration.loading) setSelectedBasket(null);
         }}
@@ -159,15 +163,11 @@ export default function DeletedBasketsScreen() {
         }
       >
         <View className="gap-3">
-          <ThemedText themeColor="textOnBackground2">
-            Deseja restaurar {selectedBasket?.name ?? "esta cesta"} e sua
-            composição?
-          </ThemedText>
           {deletedSupplies.length > 0 ? (
             <View className="gap-2">
               <ThemedText themeColor="danger">
-                Esta cesta contém mantimentos excluídos. Restaure-os antes de
-                restaurar a cesta.
+                Esta cesta contém mantimentos excluídos e não pode ser
+                restaurada.
               </ThemedText>
               {deletedSupplies.map((item) => (
                 <ThemedText
@@ -180,10 +180,16 @@ export default function DeletedBasketsScreen() {
               ))}
             </View>
           ) : (
-            <ThemedText themeColor="textMutedOnBackground2">
-              Os registros de auditoria e as entregas anteriores serão
-              preservados.
-            </ThemedText>
+            <>
+              <ThemedText themeColor="textOnBackground2">
+                Deseja restaurar {selectedBasket?.name ?? "esta cesta"} e sua
+                composição?
+              </ThemedText>
+              <ThemedText themeColor="textMutedOnBackground2">
+                Os registros de auditoria e as entregas anteriores serão
+                preservados.
+              </ThemedText>
+            </>
           )}
         </View>
       </ThemedModal>

@@ -61,7 +61,15 @@ function formatValue(key: string, value: unknown): string {
         .map((item) => {
           const supply = asObject(item);
           const id = supply.supplyId ?? supply.id ?? "";
-          return `Mantimento ${String(id).slice(0, 8)}: ${String(supply.quantity ?? "—")}`;
+          const shortId = String(id).slice(0, 8);
+          const name =
+            typeof supply.supplyName === "string"
+              ? supply.supplyName.trim()
+              : "";
+          const label = name
+            ? `${name} (${shortId})`
+            : `Mantimento ${shortId}`;
+          return `${label}: ${String(supply.quantity ?? "—")}`;
         })
         .join("; ") || "Nenhum mantimento"
     );

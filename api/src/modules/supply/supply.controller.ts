@@ -14,6 +14,7 @@ import {
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiConflictResponse,
   ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
@@ -69,6 +70,9 @@ export class SupplyController {
   @HttpCode(204)
   @ApiOperation({ summary: 'Exclui logicamente um mantimento' })
   @ApiNoContentResponse({ description: 'Mantimento excluído.' })
+  @ApiConflictResponse({
+    description: 'O mantimento pertence a uma cesta ativa.',
+  })
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.remove(id);
   }

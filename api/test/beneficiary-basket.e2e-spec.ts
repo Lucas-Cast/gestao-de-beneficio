@@ -506,7 +506,7 @@ describe('Beneficiaries, baskets and audit (PostgreSQL)', () => {
       {},
     ).expect(409);
     expect(response.body.message).toBe(
-      'Restaure os mantimentos excluídos antes de restaurar esta cesta.',
+      'Esta cesta contém mantimentos excluídos e não pode ser restaurada.',
     );
     expect((await get('/baskets/deleted').expect(200)).body.total).toBe(1);
     expect((await get('/baskets').expect(200)).body.total).toBe(0);

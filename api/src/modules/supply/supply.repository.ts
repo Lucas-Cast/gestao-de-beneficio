@@ -51,9 +51,18 @@ export class SupplyRepository {
     });
   }
 
-  softDelete(id: string) {
-    return this.database.supply.update({
-      where: { id, deletedAt: null },
+  softDelete(tx: Prisma.TransactionClient, id: string) {
+    return tx.supply.updateMany({
+      where: {
+        id,
+        deletedAt: null,
+        basketItems: {
+          none: {
+            deletedAt: null,
+            basket: { is: { deletedAt: null } },
+          },
+        },
+      },
       data: { deletedAt: new Date() },
     });
   }

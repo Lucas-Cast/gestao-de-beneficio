@@ -59,12 +59,6 @@ export function BasketDetailsModal({ id, onClose }: Props) {
         ) : details.data ? (
           <View className="gap-3 sm:flex-row sm:justify-end">
             <ThemedButton
-              label="Fechar"
-              variant="secondary"
-              onPress={close}
-              className="sm:min-w-32"
-            />
-            <ThemedButton
               label="Excluir"
               variant="secondary"
               onPress={() => setConfirmingDelete(true)}

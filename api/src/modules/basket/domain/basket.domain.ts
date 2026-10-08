@@ -105,6 +105,7 @@ export class BasketDomain {
       supplies: this.supplies.map((item) => ({
         id: item.id,
         supplyId: item.supply.id,
+        supplyName: item.supply.name,
         quantity: item.quantity,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,

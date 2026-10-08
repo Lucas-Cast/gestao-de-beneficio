@@ -85,6 +85,11 @@ describe('BasketDomain', () => {
 
     expect(basket.availableBasketCount).toBe(3);
     expect(basket.auditSnapshot()).not.toHaveProperty('availableBasketCount');
+    expect(basket.auditSnapshot().supplies[0]).toMatchObject({
+      supplyId: 'rice-id',
+      supplyName: 'Arroz',
+      quantity: 2,
+    });
   });
 
   it('reports zero available baskets when a required supply is deleted', () => {

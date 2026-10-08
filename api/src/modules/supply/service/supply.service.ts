@@ -7,10 +7,14 @@ import { CreateSupplyDto } from '../dto/create-supply.dto';
 import { UpdateSupplyDto } from '../dto/update-supply.dto';
 import { ListSuppliesDto } from '../dto/list-supplies.dto';
 import { SupplyRepository } from '../supply.repository';
+import { DatabaseService } from '../../database/database.service';
 
 @Injectable()
 export class SupplyService {
-  constructor(private readonly repository: SupplyRepository) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly repository: SupplyRepository,
+  ) {}
 
   async assertActiveInTransaction(tx: Prisma.TransactionClient, ids: string[]) {
     const uniqueIds = [...new Set(ids)];
@@ -93,8 +97,18 @@ export class SupplyService {
   }
 
   remove(id: string) {
-    return withHttpErrors(async () => {
-      await this.repository.softDelete(id);
-    });
+    return withHttpErrors(() =>
+      this.database.$transaction(
+        async (tx) => {
+          const result = await this.repository.softDelete(tx, id);
+          if (result.count === 1) return;
+
+          if (!(await this.repository.findById(id, tx)))
+            throw new DomainError('SUPPLY_NOT_FOUND');
+          throw new DomainError('SUPPLY_IN_ACTIVE_BASKET');
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      ),
+    );
   }
 }

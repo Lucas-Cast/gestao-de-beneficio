@@ -24,13 +24,18 @@ const domainResponses: Record<
     status: 404,
     message: 'Mantimento não encontrado ou excluído.',
   },
+  SUPPLY_IN_ACTIVE_BASKET: {
+    status: 409,
+    message:
+      'Não é possível excluir este mantimento enquanto uma cesta ativa o utilizar. Exclua a cesta primeiro.',
+  },
   BASKET_NOT_FOUND: {
     status: 404,
     message: 'Cesta não encontrada ou excluída.',
   },
   BASKET_HAS_DELETED_SUPPLY: {
     status: 409,
-    message: 'Restaure os mantimentos excluídos antes de restaurar esta cesta.',
+    message: 'Esta cesta contém mantimentos excluídos e não pode ser restaurada.',
   },
   BENEFICIARY_NOT_FOUND: {
     status: 404,

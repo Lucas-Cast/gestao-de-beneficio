@@ -1,5 +1,6 @@
 import { SupplyService } from './supply.service';
 import { SupplyRepository } from '../supply.repository';
+import { DatabaseService } from '../../database/database.service';
 
 describe('SupplyService', () => {
   it('keeps an omitted balance out of Prisma create input and only writes catalog fields on update', async () => {
@@ -18,6 +19,7 @@ describe('SupplyService', () => {
       update: jest.fn().mockResolvedValue(record),
     };
     const service = new SupplyService(
+      {} as DatabaseService,
       repository as unknown as SupplyRepository,
     );
     await service.create({ name: 'Arroz', unit: 'UNIT' });

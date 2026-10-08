@@ -132,7 +132,14 @@ test("blocks restore and explains when a basket references a deleted supply", as
   await renderScreen();
   await screen.findByText("Cesta antiga");
   await fireEvent.press(screen.getByRole("button", { name: "Restaurar" }));
-  expect(await screen.findByText(/contém mantimentos excluídos/)).toBeTruthy();
+  expect(
+    await screen.findByText(
+      "Esta cesta contém mantimentos excluídos e não pode ser restaurada.",
+    ),
+  ).toBeTruthy();
+  expect(
+    screen.getByText("Cesta não pode ser restaurada"),
+  ).toBeTruthy();
   expect(
     screen.getByRole("button", { name: "Restaurar cesta" }).props
       .accessibilityState.disabled,

@@ -89,6 +89,10 @@ test("opens details from a plain row and navigates to catalog edit", async () =>
   expect(screen.queryByText("Ações")).toBeNull();
 
   await fireEvent.press(screen.getAllByRole("button", { name: "Abrir Arroz" })[0]);
+  expect(
+    screen.getByRole("button", { name: "Fechar Detalhes do mantimento" }),
+  ).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Fechar" })).toBeNull();
   expect(await screen.findByRole("button", { name: "Editar" })).toBeTruthy();
   expect(screen.getAllByText("Arroz branco").length).toBeGreaterThan(1);
   expect(screen.getAllByText("12 kg").length).toBeGreaterThan(1);

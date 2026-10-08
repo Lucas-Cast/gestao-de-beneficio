@@ -21,6 +21,8 @@ describe('Inventory API (PostgreSQL)', () => {
     request(server()).post(path).auth(token, { type: 'bearer' }).send(body);
   const get = (path: string) =>
     request(server()).get(path).auth(token, { type: 'bearer' });
+  const remove = (path: string) =>
+    request(server()).delete(path).auth(token, { type: 'bearer' });
 
   beforeAll(async () => {
     fixture = await createIntegrationApp();
@@ -188,6 +190,27 @@ describe('Inventory API (PostgreSQL)', () => {
       type: 'IN',
       quantity: 1,
     }).expect(404);
+    expect(
+      (await db().supply.findUniqueOrThrow({ where: { id: item.id } }))
+        .deletedAt,
+    ).not.toBeNull();
+  });
+
+  it('blocks deleting a supply used by an active basket until the basket is deleted', async () => {
+    const { basketId, supplies } = await basket([10], [2]);
+    const item = supplies[0];
+
+    const response = await remove(`/supplies/${item.id}`).expect(409);
+    expect(response.body.message).toBe(
+      'Não é possível excluir este mantimento enquanto uma cesta ativa o utilizar. Exclua a cesta primeiro.',
+    );
+    expect(
+      (await db().supply.findUniqueOrThrow({ where: { id: item.id } }))
+        .deletedAt,
+    ).toBeNull();
+
+    await remove(`/baskets/${basketId}`).expect(204);
+    await remove(`/supplies/${item.id}`).expect(204);
     expect(
       (await db().supply.findUniqueOrThrow({ where: { id: item.id } }))
         .deletedAt,

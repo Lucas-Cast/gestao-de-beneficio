@@ -89,6 +89,10 @@ test("opens basket details and soft-deletes only after confirmation", async () =
     (await screen.findAllByRole("button", { name: "Abrir Cesta básica" }))[0],
   );
   expect(await screen.findByText("Composição · 1 mantimento")).toBeTruthy();
+  expect(
+    screen.getByRole("button", { name: "Fechar Detalhes da cesta" }),
+  ).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Fechar" })).toBeNull();
   expect(screen.getByText("Disponibilidade estimada")).toBeTruthy();
   expect(screen.getByText("3 cestas")).toBeTruthy();
   expect(screen.getByText("2 kg")).toBeTruthy();

@@ -10,6 +10,7 @@ import { Pressable, View } from "react-native";
 import { TextFieldInput } from "@/components/text-field";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedModal } from "@/components/ui/themed-modal";
+import { formatDateForDisplay } from "@/utils/date-format";
 
 type DateFieldProps<
   TFieldValues extends FieldValues,
@@ -52,12 +53,6 @@ function firstYearOnPage(year: number) {
 
 function monthKey(date: Date) {
   return date.toISOString().slice(0, 7);
-}
-
-function formatDateForDisplay(value: string) {
-  const date = parseDate(value);
-  if (!Number.isFinite(date.getTime())) return value;
-  return new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(date);
 }
 
 export function DateField<

@@ -8,14 +8,12 @@ import { SearchField } from "@/components/ui/search-field";
 import { ThemedButton } from "@/components/ui/themed-button";
 import { ThemedEmptyState } from "@/components/ui/themed-empty-state";
 import { useTheme } from "@/hooks/use-theme";
+import { formatDateForDisplay } from "@/utils/date-format";
 
 import { useBeneficiarySearch } from "../hooks/use-beneficiary-search";
 import { useRefreshBeneficiariesOnFocus } from "../hooks/use-refresh-beneficiaries-on-focus";
 import { useRestoreBeneficiary } from "../hooks/use-restore-beneficiary";
-import {
-  formatCpfForDisplay,
-  formatDateForDisplay,
-} from "../utils/beneficiary-format";
+import { formatCpfForDisplay } from "../utils/beneficiary-format";
 
 export default function DeletedBeneficiariesScreen() {
   const router = useRouter();

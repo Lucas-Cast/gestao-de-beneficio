@@ -58,7 +58,7 @@ export default function AccountScreen() {
       </ThemedCard>
       <ThemedCard>
         <View className="gap-3">
-          {["Cestas", "Estoque"].map((label) => (
+          {["Estoque"].map((label) => (
             <ThemedButton
               key={label}
               label={label + " · Em breve"}

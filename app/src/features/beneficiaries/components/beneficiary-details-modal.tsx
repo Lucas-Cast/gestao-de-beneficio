@@ -8,12 +8,12 @@ import { ThemedModal } from "@/components/ui/themed-modal";
 import { API_ROUTES } from "@/constants/routes";
 import { useApiGet } from "@/hooks/api/use-api-get";
 import { useTheme } from "@/hooks/use-theme";
+import { formatDateForDisplay } from "@/utils/date-format";
 
 import { useDeleteBeneficiary } from "../hooks/use-delete-beneficiary";
 import type { Beneficiary } from "../types/beneficiary.types";
 import {
   formatCpfForDisplay,
-  formatDateForDisplay,
   formatPhone,
 } from "../utils/beneficiary-format";
 

@@ -12,6 +12,13 @@ const basketRelations = {
   },
 } satisfies Prisma.BasketInclude;
 
+const deletedBasketRelations = {
+  supplies: {
+    include: { supply: true },
+    orderBy: { supplyId: 'asc' },
+  },
+} satisfies Prisma.BasketInclude;
+
 @Injectable()
 export class BasketRepository {
   constructor(private readonly database: DatabaseService) {}
@@ -46,6 +53,50 @@ export class BasketRepository {
         }),
       () => this.database.basket.count({ where }),
     );
+  }
+
+  findDeleted(query: ListBasketsDto) {
+    const where: Prisma.BasketWhereInput = {
+      deletedAt: { not: null },
+      name: query.search
+        ? { contains: query.search, mode: 'insensitive' }
+        : undefined,
+    };
+    return paginate(
+      query,
+      ({ skip, take }) =>
+        this.database.basket.findMany({
+          where,
+          include: deletedBasketRelations,
+          skip,
+          take,
+          orderBy: [{ deletedAt: 'desc' }, { id: 'desc' }],
+        }),
+      () => this.database.basket.count({ where }),
+    );
+  }
+
+  findDeletedById(id: string, tx: Prisma.TransactionClient) {
+    return tx.basket.findFirst({
+      where: { id, deletedAt: { not: null } },
+      include: deletedBasketRelations,
+    });
+  }
+
+  restore(tx: Prisma.TransactionClient, id: string, deletedAt: Date) {
+    return tx.basket.update({
+      where: { id, deletedAt: { not: null } },
+      data: {
+        deletedAt: null,
+        supplies: {
+          updateMany: {
+            where: { deletedAt },
+            data: { deletedAt: null },
+          },
+        },
+      },
+      include: basketRelations,
+    });
   }
 
   softDelete(tx: Prisma.TransactionClient, id: string) {

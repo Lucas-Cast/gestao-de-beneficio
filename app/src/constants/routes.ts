@@ -6,7 +6,12 @@ export const API_ROUTES = {
     byId: (id: string) => `/beneficiaries/${id}`,
     restore: (id: string) => `/beneficiaries/${id}/restore`,
   },
-  baskets: { collection: "/baskets" },
+  baskets: {
+    collection: "/baskets",
+    deleted: "/baskets/deleted",
+    byId: (id: string) => `/baskets/${id}`,
+    restore: (id: string) => `/baskets/${id}/restore`,
+  },
   basketDeliveries: { collection: "/basket-deliveries" },
   supplies: {
     collection: "/supplies",

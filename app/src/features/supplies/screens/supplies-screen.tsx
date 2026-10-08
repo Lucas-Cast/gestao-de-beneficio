@@ -11,10 +11,11 @@ import { ThemedButton } from "@/components/ui/themed-button";
 import { ThemedEmptyState } from "@/components/ui/themed-empty-state";
 import { ThemedTable, type TableColumn } from "@/components/ui/themed-table";
 import { useTheme } from "@/hooks/use-theme";
+import { formatSupplyQuantity, supplyUnitName } from "@/utils/supply-format";
 
 import { StockMovementModal } from "../components/stock-movement-modal";
 import { SupplyDetailsModal } from "../components/supply-details-modal";
-import { SUPPLY_UNIT_OPTIONS, formatSupplyQuantity, unitLabel } from "../constants/supply-units";
+import { SUPPLY_UNIT_OPTIONS } from "../constants/supply-units";
 import { useRefreshSuppliesOnFocus } from "../hooks/use-refresh-supplies-on-focus";
 import { useSupplySearch } from "../hooks/use-supply-search";
 import type { Supply, SupplyUnit } from "../types/supply.types";
@@ -41,7 +42,7 @@ const columns: readonly TableColumn<Supply>[] = [
     className: "min-w-32 flex-1",
     render: (supply) => (
       <ThemedText type="small" themeColor="textOnBackground2">
-        {unitLabel(supply.unit)}
+        {supplyUnitName(supply.unit)}
       </ThemedText>
     ),
   },
@@ -179,7 +180,9 @@ export default function SuppliesScreen() {
                     <ThemedText type="small" themeColor="textMutedOnBackground2">Ver detalhes</ThemedText>
                   </View>
                   <ThemedText type="small" themeColor="textOnBackground2">
-                    {formatSupplyQuantity(supply.currentQuantity, supply.unit)} · {unitLabel(supply.unit)}
+                    {formatSupplyQuantity(supply.currentQuantity, supply.unit)}
+                    {" · "}
+                    {supplyUnitName(supply.unit)}
                   </ThemedText>
                   {supply.description ? (
                     <ThemedText type="small" themeColor="textMutedOnBackground2">

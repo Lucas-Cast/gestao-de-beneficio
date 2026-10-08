@@ -1,7 +1,10 @@
 import { View } from "react-native";
+
 import { ThemedText } from "@/components/themed-text";
+import { formatSupplyQuantity } from "@/utils/supply-format";
+
 import type { Basket } from "../types/delivery.types";
-import { UNIT_LABELS } from "../validation/delivery.schema";
+
 export function BasketComposition({
   basket,
   quantity = 1,
@@ -20,8 +23,8 @@ export function BasketComposition({
           type="small"
           themeColor="textMutedOnBackground2"
         >
-          {item.quantity * quantity}{" "}
-          {UNIT_LABELS[item.supply.unit] ?? item.supply.unit} de{" "}
+          {formatSupplyQuantity(item.quantity * quantity, item.supply.unit)}
+          {" de "}
           {item.supply.name}
         </ThemedText>
       ))}

@@ -8,8 +8,8 @@ import { ThemedModal } from "@/components/ui/themed-modal";
 import { API_ROUTES } from "@/constants/routes";
 import { useApiGet } from "@/hooks/api/use-api-get";
 import { useTheme } from "@/hooks/use-theme";
+import { formatSupplyQuantity, supplyUnitName } from "@/utils/supply-format";
 
-import { formatSupplyQuantity, unitLabel } from "../constants/supply-units";
 import { useDeleteSupply } from "../hooks/use-supply-mutations";
 import type { Supply } from "../types/supply.types";
 
@@ -84,8 +84,17 @@ export function SupplyDetailsModal({
         <View className="gap-5">
           <Detail label="Mantimento" value={details.data.name} />
           <Detail label="Descrição" value={details.data.description || "Não informada"} />
-          <Detail label="Unidade de medida" value={unitLabel(details.data.unit)} />
-          <Detail label="Saldo atual" value={formatSupplyQuantity(details.data.currentQuantity, details.data.unit)} />
+          <Detail
+            label="Unidade de medida"
+            value={supplyUnitName(details.data.unit)}
+          />
+          <Detail
+            label="Saldo atual"
+            value={formatSupplyQuantity(
+              details.data.currentQuantity,
+              details.data.unit,
+            )}
+          />
         </View>
       )}
     </ThemedModal>

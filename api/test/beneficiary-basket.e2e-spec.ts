@@ -426,6 +426,133 @@ describe('Beneficiaries, baskets and audit (PostgreSQL)', () => {
     ).toMatchObject({ quantity: 4, type: 'OUT' });
   });
 
+  it('lists deleted baskets and restores the basket composition with an audit entry', async () => {
+    const { response: created } = await createBasket();
+    await remove('/baskets/' + created.body.id).expect(204);
+
+    const deleted = await get('/baskets/deleted?search=básica').expect(200);
+    expect(deleted.body).toMatchObject({
+      total: 1,
+      data: [
+        {
+          id: created.body.id,
+          deletedAt: expect.any(String),
+          supplies: [
+            {
+              quantity: 2,
+              deletedAt: expect.any(String),
+              supply: { id: expect.any(String), deletedAt: null },
+            },
+          ],
+        },
+      ],
+    });
+
+    const restored = await patch(
+      '/baskets/' + created.body.id + '/restore',
+      {},
+    ).expect(200);
+    expect(restored.body).toMatchObject({
+      id: created.body.id,
+      deletedAt: null,
+      supplies: [{ quantity: 2, deletedAt: null }],
+    });
+    expect((await get('/baskets/deleted').expect(200)).body.total).toBe(0);
+    expect((await get('/baskets').expect(200)).body.total).toBe(1);
+
+    const history = await logs(created.body.id);
+    expect(history).toHaveLength(3);
+    expect(history[2]).toMatchObject({
+      entityType: 'BASKET',
+      changedById: actorId,
+      from: { deletedAt: expect.any(String) },
+      to: { deletedAt: null },
+    });
+    expect(history[2].from).toMatchObject({
+      supplies: [{ supplyId: expect.any(String), quantity: 2 }],
+    });
+    expect(history[2].to).toMatchObject({
+      supplies: [{ supplyId: expect.any(String), quantity: 2 }],
+    });
+  });
+
+  it('filters and paginates soft-deleted baskets', async () => {
+    const first = await createBasket();
+    const second = await createBasket();
+    await remove('/baskets/' + first.response.body.id).expect(204);
+    await remove('/baskets/' + second.response.body.id).expect(204);
+
+    const page1 = await get('/baskets/deleted')
+      .query({ search: 'BÁSICA', page: 1, pageSize: 1 })
+      .expect(200);
+    const page2 = await get('/baskets/deleted')
+      .query({ search: 'básica', page: 2, pageSize: 1 })
+      .expect(200);
+    expect(page1.body).toMatchObject({ total: 2, page: 1, pageSize: 1 });
+    expect(page2.body).toMatchObject({ total: 2, page: 2, pageSize: 1 });
+    expect(page1.body.data[0].id).not.toBe(page2.body.data[0].id);
+  });
+
+  it('does not restore a basket whose supply is soft-deleted and keeps the operation atomic', async () => {
+    const { response: created, supply } = await createBasket();
+    await remove('/baskets/' + created.body.id).expect(204);
+    await db().supply.update({
+      where: { id: supply.id },
+      data: { deletedAt: new Date() },
+    });
+
+    const response = await patch(
+      '/baskets/' + created.body.id + '/restore',
+      {},
+    ).expect(409);
+    expect(response.body.message).toBe(
+      'Restaure os mantimentos excluídos antes de restaurar esta cesta.',
+    );
+    expect((await get('/baskets/deleted').expect(200)).body.total).toBe(1);
+    expect((await get('/baskets').expect(200)).body.total).toBe(0);
+    expect(
+      await db().basketSupply.count({
+        where: { basketId: created.body.id, deletedAt: null },
+      }),
+    ).toBe(0);
+    expect(
+      await db().auditLog.count({ where: { entityId: created.body.id } }),
+    ).toBe(2);
+  });
+
+  it('rejects restoring a basket that is not currently deleted', async () => {
+    const { response: created } = await createBasket();
+    const response = await patch(
+      '/baskets/' + created.body.id + '/restore',
+      {},
+    ).expect(404);
+    expect(response.body.message).toBe('Cesta não encontrada ou excluída.');
+  });
+
+  it('rolls back basket restoration and child links when audit insertion fails', async () => {
+    const { response: created } = await createBasket();
+    await remove('/baskets/' + created.body.id).expect(204);
+    failAfterAuditInsert();
+
+    const response = await patch(
+      '/baskets/' + created.body.id + '/restore',
+      {},
+    ).expect(500);
+    expect(JSON.stringify(response.body)).not.toContain(
+      'Internal audit failure',
+    );
+    expect((await get('/baskets/deleted').expect(200)).body.total).toBe(1);
+    expect((await get('/baskets').expect(200)).body.total).toBe(0);
+    expect(
+      await db().basketSupply.count({
+        where: { basketId: created.body.id, deletedAt: null },
+      }),
+    ).toBe(0);
+    expect(
+      await db().auditLog.count({ where: { entityId: created.body.id } }),
+    ).toBe(2);
+  });
+
   it('rolls back beneficiary, address and audit even when failure happens after audit insertion', async () => {
     failAfterAuditInsert();
     const response = await post('/beneficiaries', beneficiaryBody).expect(500);

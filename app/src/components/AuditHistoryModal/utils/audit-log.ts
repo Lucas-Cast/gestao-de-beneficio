@@ -1,4 +1,5 @@
 import type { AuditEntityType, AuditLog } from "../types/audit";
+import { formatDateForDisplay } from "@/utils/date-format";
 
 const entityLabels: Record<AuditEntityType, string> = {
   BENEFICIARY: "Beneficiário",
@@ -68,10 +69,7 @@ function formatValue(key: string, value: unknown): string {
   if (Array.isArray(value)) return value.map(String).join(", ");
   if (typeof value === "object") return JSON.stringify(value);
   if (typeof value === "string" && key === "birthDate") {
-    const date = new Date(`${value.slice(0, 10)}T00:00:00.000Z`);
-    return Number.isFinite(date.getTime())
-      ? new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(date)
-      : value;
+    return formatDateForDisplay(value);
   }
   return String(value);
 }

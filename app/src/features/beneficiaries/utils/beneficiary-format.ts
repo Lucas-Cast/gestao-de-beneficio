@@ -41,9 +41,3 @@ export function formatPostalCodeInput(value: string) {
 export function formatCpfForDisplay(value: string) {
   return formatCpf(value);
 }
-
-export function formatDateForDisplay(value: string) {
-  const date = new Date(`${value.slice(0, 10)}T00:00:00.000Z`);
-  if (!Number.isFinite(date.getTime())) return value;
-  return new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(date);
-}

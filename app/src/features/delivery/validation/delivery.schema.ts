@@ -31,11 +31,3 @@ export function beneficiarySearch(text: string): {
 export function formatCpf(cpf: string) {
   return cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
 }
-export const UNIT_LABELS: Record<string, string> = {
-  UNIT: "unidade(s)",
-  KILOGRAM: "kg",
-  GRAM: "g",
-  LITER: "L",
-  MILLILITER: "mL",
-  PACKAGE: "pacote(s)",
-};

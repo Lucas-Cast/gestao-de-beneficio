@@ -7,6 +7,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Patch,
   Query,
   Req,
   UseGuards,
@@ -50,11 +51,28 @@ export class BasketController {
     return this.service.findAll(query);
   }
 
+  @Get('deleted')
+  @ApiOperation({ summary: 'Lista cestas excluídas com paginação e filtros' })
+  @ApiOkResponse({ type: BasketPageDto })
+  findDeleted(@Query() query: ListBasketsDto) {
+    return this.service.findDeleted(query);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Consulta uma cesta e seus mantimentos' })
   @ApiOkResponse({ type: BasketResponseDto })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.findOne(id);
+  }
+
+  @Patch(':id/restore')
+  @ApiOperation({ summary: 'Restaura uma cesta excluída' })
+  @ApiOkResponse({ type: BasketResponseDto })
+  restore(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request & { user: { id: string } },
+  ) {
+    return this.service.restore(id, request.user.id);
   }
 
   @Delete(':id')

@@ -1,13 +1,7 @@
-export const SUPPLY_UNITS = [
-  "UNIT",
-  "KILOGRAM",
-  "GRAM",
-  "LITER",
-  "MILLILITER",
-  "PACKAGE",
-] as const;
+import { SUPPLY_UNITS, type SupplyUnit } from "@/constants/supply-units";
 
-export type SupplyUnit = (typeof SUPPLY_UNITS)[number];
+export { SUPPLY_UNITS };
+export type { SupplyUnit };
 export type MovementType = "IN" | "OUT";
 
 export type Supply = {

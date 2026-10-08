@@ -28,6 +28,10 @@ const domainResponses: Record<
     status: 404,
     message: 'Cesta não encontrada ou excluída.',
   },
+  BASKET_HAS_DELETED_SUPPLY: {
+    status: 409,
+    message: 'Restaure os mantimentos excluídos antes de restaurar esta cesta.',
+  },
   BENEFICIARY_NOT_FOUND: {
     status: 404,
     message: 'Beneficiário não encontrado ou excluído.',

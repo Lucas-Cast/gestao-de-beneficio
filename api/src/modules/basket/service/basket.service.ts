@@ -72,6 +72,18 @@ export class BasketService {
     });
   }
 
+  findDeleted(query: ListBasketsDto) {
+    return withHttpErrors(async () => {
+      const { data, total } = await this.repository.findDeleted(query);
+      return {
+        data: BasketDomain.fromPrismaMany(data),
+        total,
+        page: query.page,
+        pageSize: query.pageSize,
+      };
+    });
+  }
+
   findOne(id: string) {
     return withHttpErrors(async () => {
       const record = await this.repository.findById(id);
@@ -97,6 +109,32 @@ export class BasketService {
             after.auditSnapshot(),
             actorId,
           );
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      ),
+    );
+  }
+
+  restore(id: string, actorId: string) {
+    return withHttpErrors(() =>
+      this.database.$transaction(
+        async (tx) => {
+          const deleted = await this.repository.findDeletedById(id, tx);
+          if (!deleted) throw new DomainError('BASKET_NOT_FOUND');
+          const before = BasketDomain.fromPrisma(deleted);
+          before.validateCanRestore();
+          const after = BasketDomain.fromPrisma(
+            await this.repository.restore(tx, id, deleted.deletedAt!),
+          );
+          await this.audit.record(
+            tx,
+            'BASKET',
+            id,
+            before.auditSnapshot(),
+            after.auditSnapshot(),
+            actorId,
+          );
+          return after;
         },
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       ),

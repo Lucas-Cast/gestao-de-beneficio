@@ -48,6 +48,7 @@ export default function BottomNavigation() {
             icon: "account-group-outline",
           },
           { name: "supplies", title: "Mantimentos", icon: "basket-outline" },
+          { name: "baskets", title: "Cestas", icon: "basket" },
           { name: "more", title: "Mais", icon: "dots-horizontal" },
         ] as const
       ).map((tab) => (

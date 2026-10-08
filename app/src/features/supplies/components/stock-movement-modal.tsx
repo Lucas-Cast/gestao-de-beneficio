@@ -11,8 +11,8 @@ import { ThemedButton } from "@/components/ui/themed-button";
 import { ThemedEmptyState } from "@/components/ui/themed-empty-state";
 import { ThemedModal } from "@/components/ui/themed-modal";
 import { useTheme } from "@/hooks/use-theme";
+import { formatSupplyQuantity } from "@/utils/supply-format";
 
-import { formatSupplyQuantity } from "../constants/supply-units";
 import { useCreateStockMovement } from "../hooks/use-supply-mutations";
 import { useSupplySearch } from "../hooks/use-supply-search";
 import type { StockMovementFormValues, Supply } from "../types/supply.types";

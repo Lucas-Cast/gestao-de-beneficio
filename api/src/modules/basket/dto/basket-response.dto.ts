@@ -16,6 +16,12 @@ export class BasketResponseDto {
   @ApiProperty({ type: String, nullable: true }) description!: string | null;
   @ApiProperty({ type: [BasketSupplyResponseDto] })
   supplies!: BasketSupplyResponseDto[];
+  @ApiProperty({
+    description: 'Estimativa de cestas montáveis com o estoque atual.',
+    example: 3,
+    minimum: 0,
+  })
+  availableBasketCount!: number;
   @ApiProperty() createdAt!: Date;
   @ApiProperty() updatedAt!: Date;
   @ApiProperty({ type: Date, nullable: true }) deletedAt!: Date | null;
